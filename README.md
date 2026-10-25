@@ -28,15 +28,15 @@ Framewise follows the app in focus and credits Premiere, After Effects and Photo
 time to the project you are actually on. It lives in the tray, keeps every number on
 your machine, and stays out of the edit.
 
-> **Status:** 1.0 release candidate for Windows, in final testing. Open source under
-> MIT. No telemetry, no accounts, no network requests.
+> **Status:** Framewise 1.0 is available for Windows 10/11. Open source under MIT.
+> No telemetry, no accounts, no network requests.
 
 ## Contents
 
 - [Why Framewise](#why-framewise)
 - [Highlights](#highlights)
 - [Screenshots](#screenshots)
-- [Portable build](#portable-build)
+- [Download](#download)
 - [Website](#website)
 - [Privacy](#privacy)
 - [How it works](#how-it-works)
@@ -104,14 +104,18 @@ timeline, one heatmap, and reports you can export without an account.
   <img src="docs/screenshots/mini-360x132-dark.png" width="36%" alt="Framewise mini timer near the tray" />
 </p>
 
-## Portable build
+## Download
 
-1.0 is in release-candidate testing. No installer or public archive is published yet;
-build the portable folder from source with `npm run build:portable`. The result is a
-folder, not an installer or an archive:
+Framewise 1.0 is available for Windows 10/11 from
+[GitHub Releases](https://github.com/SnegOwo/Framewise/releases/latest):
+
+- **Installer** — `Framewise_1.0.0_x64-setup.exe`
+- **Portable** — `Framewise_1.0.0_x64_portable.zip`
+
+The portable zip contains:
 
 ```
-release/Framewise_1.0.0_x64_portable/
+Framewise_1.0.0_x64_portable/
 ├── framewise.exe
 ├── framewise.portable
 └── README.txt

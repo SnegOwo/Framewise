@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Framewise documentation: install the portable build, set up projects and focus tools, understand tracking rules, reports, privacy and keyboard shortcuts."
+      content="Framewise documentation: install Framewise, set up projects and focus tools, understand tracking rules, reports, privacy and keyboard shortcuts."
     />
     <meta name="theme-color" content="#0a0a0a" />
     <link rel="canonical" href="https://snegowo.github.io/Framewise/docs.html" />
@@ -94,7 +94,7 @@
         </nav>
         <div class="docs-version">
           <span class="dot"></span>
-          v1.0 · release candidate
+          v1.0 · available
         </div>
       </aside>
 
@@ -104,7 +104,7 @@
           <h1>Everything,<br /><span>without the guesswork.</span></h1>
           <p>
             Framewise is a local time tracker for Windows that follows the app in focus.
-            This guide covers the portable build, projects, focus tools, reports, privacy
+            This guide covers installation, projects, focus tools, reports, privacy
             and the small details.
           </p>
           <div class="docs-meta">
@@ -118,16 +118,17 @@
         <section id="start">
           <h2>Getting started</h2>
           <p>
-            Framewise 1.0 is in release-candidate testing. There is no public installer or
-            download archive yet. The source is public and the portable folder can be
-            built from it; the website will link the tested build when it ships.
+            Framewise 1.0 is available for Windows 10/11 from
+            <a href="https://github.com/SnegOwo/Framewise/releases/latest" target="_blank" rel="noreferrer">GitHub Releases</a>.
+            Choose the installer for a normal per-user install, or the portable zip to
+            keep everything in one folder.
           </p>
           <div class="doc-callout">
-            <strong>Same folder, no install.</strong>
+            <strong>Same app, two ways to install.</strong>
             <span>
-              The portable build is a folder containing <code>framewise.exe</code>,
-              <code>framewise.portable</code> and a readme. Keep the folder together and
-              run the exe. The marker is what keeps all data beside the app.
+              The installer registers Framewise for the current user. The portable zip
+              contains <code>framewise.exe</code>, <code>framewise.portable</code> and a
+              readme; keep the folder together and data stays in <code>data/</code>.
             </span>
           </div>
           <h3>First run</h3>
@@ -354,9 +355,9 @@ npm run audit:offline
 cargo test --lib
 cargo check</code></pre>
           <p>
-            Build the portable folder with <code>npm run build:portable</code>. The output is a
-            folder — not an installer or archive — at
-            <code>release/Framewise_1.0.0_x64_portable/</code>.
+            Build the portable folder with <code>npm run build:portable</code>, or the NSIS
+            installer with <code>npx tauri build</code>. Outputs go to
+            <code>release/</code> and <code>src-tauri/target/release/bundle/</code>.
           </p>
         </section>
 
@@ -382,7 +383,7 @@ cargo check</code></pre>
             project time instead. Projects without tools always count in full.
           </p>
           <h3>Is there an installer?</h3>
-          <p>Not yet. The 1.0 release candidate is the portable folder.</p>
+          <p>Yes. Use the installer from GitHub Releases, or the portable zip if you want no install.</p>
         </section>
 
         <section id="troubleshooting">
@@ -424,7 +425,7 @@ cargo check</code></pre>
           <img src="assets/logo.png" width="22" height="22" alt="" />
           <span>Framewise</span>
         </a>
-        <span>Documentation · v1.0 release candidate</span>
+        <span>Documentation · v1.0</span>
         <a class="footer-link" href="index.html">Back to site</a>
         <a class="footer-link" href="https://github.com/SnegOwo/Framewise" target="_blank" rel="noreferrer">GitHub ↗</a>
         <span>Made by Sneg HQ · MIT · <span id="year">2026</span></span>

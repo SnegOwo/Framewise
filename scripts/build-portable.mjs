@@ -41,7 +41,7 @@ writeFileSync(join(folder, "framewise.portable"), "Framewise portable mode\n");
 const readme = `Framewise ${version} — portable
 
 1. Keep framewise.exe, framewise.portable and this README in one folder.
-2. Run framewise.exe. There is no installer and no archive.
+2. Run framewise.exe. Everything stays inside this folder.
 3. Everything is written to the "data" folder beside the exe:
      data\\framewise.sqlite3   your sessions, projects and settings
      data\\webview\\           the WebView2 profile and cache
