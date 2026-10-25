@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
+  AppDetails,
   AppSettingsUpdate,
   Bootstrap,
   Goal,
@@ -111,6 +112,7 @@ export const api = {
     invoke<string>("backup_database", { path }),
   importDatabase: (path: string) => invoke<void>("import_database", { path }),
   openDataFolder: () => invoke<void>("open_data_folder"),
+  appDetails: (name: string) => invoke<AppDetails>("app_details", { name }),
   openFullApp: () => invoke<void>("open_full_app"),
   openMiniWindow: () => invoke<void>("open_mini_window"),
   closeMiniWindow: () => invoke<void>("close_mini_window"),

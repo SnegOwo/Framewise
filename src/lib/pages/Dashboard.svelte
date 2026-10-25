@@ -10,6 +10,7 @@
     goals,
     loadBootstrap,
     refreshTick,
+    showAppInfo,
     status,
     streakDays,
     toast,
@@ -190,18 +191,24 @@
     <div class="status-card">
       <div class="status-top">
         {#if $status?.currentApp}
-          <AppIcon app={$status.currentApp} size={38} live={isLive} />
-          <div class="status-app">
-            <div class="status-name">{appLabel($status.currentApp)}</div>
-            <div class="status-sub">
-              {#if $status.trackingSince}
-                Since {formatTimestamp($status.trackingSince)}
-              {:else}
-                Waiting for input
-              {/if}
-              {#if $status.renderActive}· Media Encoder rendering{/if}
-            </div>
-          </div>
+          <button
+            class="status-app-open"
+            onclick={() => $status?.currentApp && showAppInfo($status.currentApp)}
+            title="Inspect application"
+          >
+            <AppIcon app={$status.currentApp} size={38} live={isLive} />
+            <span class="status-app">
+              <span class="status-name">{appLabel($status.currentApp)}</span>
+              <span class="status-sub">
+                {#if $status.trackingSince}
+                  Since {formatTimestamp($status.trackingSince)}
+                {:else}
+                  Waiting for input
+                {/if}
+                {#if $status.renderActive}· Media Encoder rendering{/if}
+              </span>
+            </span>
+          </button>
           {#if isLive}
             <div class="status-timer">
               <span class="timer">{formatHMS(liveSeconds)}</span>
@@ -390,12 +397,32 @@
     margin-bottom: 16px;
   }
 
+  .status-app-open {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+  }
+
+  .status-app-open:hover .status-name {
+    color: var(--accent-text);
+  }
+
   .status-app {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
     flex: 1;
   }
 
   .status-name {
+    display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -405,7 +432,11 @@
   }
 
   .status-sub {
+    display: block;
     margin-top: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: var(--muted);
     font-size: 12.5px;
   }

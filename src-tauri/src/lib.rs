@@ -144,7 +144,7 @@ pub fn show_mini_window(
         return Ok(());
     }
 
-    let window = WebviewWindowBuilder::new(
+    let mut builder = WebviewWindowBuilder::new(
         app,
         "mini",
         WebviewUrl::App("index.html".into()),
@@ -155,9 +155,10 @@ pub fn show_mini_window(
     .resizable(false)
     .decorations(false)
     .always_on_top(true)
-    .skip_taskbar(true)
-    .build()?;
+    .skip_taskbar(true);
 
+    // Place the window before it is created so it never flashes at the default
+    // position before jumping next to the tray.
     if let Some(monitor) = app.primary_monitor()? {
         let scale = monitor.scale_factor();
         let size = monitor.size();
@@ -182,12 +183,15 @@ pub fn show_mini_window(
         let max_x = origin.x as f64 + size.width as f64 - width - 8.0;
         let max_y = origin.y as f64 + size.height as f64 - height - 8.0;
 
-        let _ = window.set_position(tauri::PhysicalPosition::new(
-            x.clamp(min_x, max_x.max(min_x)).round() as i32,
-            y.clamp(min_y, max_y.max(min_y)).round() as i32,
-        ));
+        builder = builder.position(
+            x.clamp(min_x, max_x.max(min_x)) / scale,
+            y.clamp(min_y, max_y.max(min_y)) / scale,
+        );
+    } else {
+        builder = builder.center();
     }
 
+    let window = builder.build()?;
     let _ = window.set_focus();
     Ok(())
 }
@@ -224,6 +228,12 @@ pub fn run() {
                     save_window_state(window);
                 }
             }
+            if window.label() == "mini" {
+                // Tray popovers go away as soon as they lose focus.
+                if let tauri::WindowEvent::Focused(false) = event {
+                    let _ = window.close();
+                }
+            }
         })
         .invoke_handler(tauri::generate_handler![
             commands::get_bootstrap,
@@ -253,6 +263,7 @@ pub fn run() {
             commands::import_database,
             commands::open_data_folder,
             commands::open_full_app,
+            commands::app_details,
             commands::open_mini_window,
             commands::close_mini_window,
             commands::quit_app,

@@ -34,7 +34,7 @@ release/
 
 # marketing site and promo video (kept local)
 site/
-Assets/framewise-logo-animation.mp4
+Assets/BetterFramWise-Logo-Animation.mp4
 
 # tauri local overrides
 src-tauri/tauri.local.conf.json

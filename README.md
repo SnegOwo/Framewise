@@ -59,7 +59,12 @@ bridged with phantom time.
 
 **Goals.** A new install starts with **no goals** — no surprise 4-hour target. Create
 daily or weekly goals from the dashboard; the rings grow on first view only and the
-value can be edited inline.
+value can be edited inline. When a goal is reached, the ring completes with a check
+and a short accent burst; press `Alt+P` to preview it.
+
+**Inspect an app.** Click any app name or icon (dashboard status, sessions, timeline)
+to see its friendly name, the executable and, when it is running, the full path. That
+is how `mpvnet.exe` becomes `mpv.net` with a description.
 
 **Projects.** Name, client, color, archive, delete (confirm only for delete), active
 project, per-project stats. A project detail page has per-app bars, a 30-day chart
@@ -124,6 +129,7 @@ checkpoint on quit.
 | `↑` `↓` | Move through dock results |
 | `Enter` | Run the selected command |
 | `Esc` | Close the dock or a dialog |
+| `Alt+P` | Preview the goal celebration |
 
 ## Development
 

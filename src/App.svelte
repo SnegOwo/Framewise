@@ -8,6 +8,8 @@
   import Dock from "./lib/components/Dock.svelte";
   import Toasts from "./lib/components/Toasts.svelte";
   import Mini from "./lib/components/Mini.svelte";
+  import AppInfo from "./lib/components/AppInfo.svelte";
+  import Celebration from "./lib/components/Celebration.svelte";
   import Dashboard from "./lib/pages/Dashboard.svelte";
   import Projects from "./lib/pages/Projects.svelte";
   import Reports from "./lib/pages/Reports.svelte";
@@ -25,15 +27,18 @@
     boot,
     bumpRefresh,
     fatalError,
+    goalSeconds,
     loadBootstrap,
     loading,
     refreshStatus,
+    status,
   } from "./lib/stores";
   import { applyTheme, watchSystemTheme, type ThemeSetting } from "./lib/theme";
   import { motionDuration } from "./lib/motion";
+  import { celebrate } from "./lib/celebration";
+  import { formatDuration } from "./lib/format";
 
   let bootTheme = $state<ThemeSetting | null>(null);
-  let showHint = $state(false);
 
   const isMini = (() => {
     try {
@@ -50,37 +55,39 @@
     applyTheme(setting, false);
   });
 
-  $effect(() => {
-    if ($commandOpen) dismissHint();
-  });
+  const reachedGoals = new Set<number>();
+  let goalsReady = false;
 
-  function dismissHint() {
-    if (!showHint) return;
-    showHint = false;
-    try {
-      localStorage.setItem("framewise-hint", "seen");
-    } catch {
-      // ignore
+  $effect(() => {
+    if (!$boot || !$status) return;
+    for (const goal of $boot.goals) {
+      if (goal.targetSeconds <= 0) continue;
+      const seconds = goalSeconds(goal, $status);
+      const done = seconds >= goal.targetSeconds;
+      if (done && !reachedGoals.has(goal.id)) {
+        reachedGoals.add(goal.id);
+        if (goalsReady) {
+          celebrate(
+            goal.period === "daily" ? "Daily goal reached" : "Weekly goal reached",
+            `${formatDuration(seconds)} of ${formatDuration(goal.targetSeconds)}${
+              goal.projectName ? ` · ${goal.projectName}` : ""
+            }`,
+          );
+        }
+      } else if (!done) {
+        reachedGoals.delete(goal.id);
+      }
     }
-  }
+    goalsReady = true;
+  });
 
   async function syncFromBackend() {
     await loadBootstrap();
     bumpRefresh();
   }
 
-  function openHint() {
-    dismissHint();
-    commandOpen.set(true);
-  }
-
   onMount(() => {
     void loadBootstrap();
-    try {
-      showHint = localStorage.getItem("framewise-hint") === null;
-    } catch {
-      showHint = false;
-    }
     const stopWatchingTheme = watchSystemTheme();
     let alive = true;
     const unlisteners: Array<() => void> = [];
@@ -128,6 +135,12 @@
         "input, textarea, select, [contenteditable='true']",
       );
       const mod = event.ctrlKey || event.metaKey;
+
+      if (event.altKey && !mod && event.key.toLowerCase() === "p") {
+        event.preventDefault();
+        celebrate("Goal reached", "Every minute counted.");
+        return;
+      }
 
       if (mod && !event.altKey && event.key.toLowerCase() === "k") {
         event.preventDefault();
@@ -216,32 +229,14 @@
     </div>
 
     <Dock />
-
-    {#if showHint}
-      <button class="hint-note" onclick={openHint} title="Open the project switcher">
-        <svg width="40" height="30" viewBox="0 0 40 30" fill="none" aria-hidden="true">
-          <path
-            d="M30 2C28 12 24 19 20 23"
-            stroke="currentColor"
-            stroke-width="1.4"
-            stroke-linecap="round"
-            stroke-dasharray="3 4"
-          />
-          <path
-            d="M20 23l-5-4M20 23l5-4"
-            stroke="currentColor"
-            stroke-width="1.4"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-        <span>press / to switch project</span>
-      </button>
-    {/if}
   </div>
 {/if}
 
-{#if !isMini}<Toasts />{/if}
+{#if !isMini}
+  <AppInfo />
+  <Celebration />
+  <Toasts />
+{/if}
 
 <style>
   .app {
@@ -344,35 +339,6 @@
     }
     100% {
       transform: translateX(360%);
-    }
-  }
-
-  .hint-note {
-    position: fixed;
-    left: 50%;
-    bottom: 76px;
-    z-index: 55;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-    font-family: "Caveat Variable", "Caveat", "Segoe Script", cursive;
-    font-size: 18px;
-    transform: translateX(-50%) rotate(-2deg);
-    transition: opacity 160ms ease-out;
-  }
-
-  .hint-note:hover {
-    opacity: 0.7;
-  }
-
-  @media (max-width: 900px) {
-    .hint-note {
-      display: none;
     }
   }
 </style>

@@ -521,6 +521,14 @@ pub fn open_data_folder(state: State<'_, AppState>) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn app_details(name: String) -> AppDetails {
+    AppDetails {
+        path: crate::winapi::process_path(&name),
+        name,
+    }
+}
+
+#[tauri::command]
 pub async fn open_full_app(app: AppHandle) -> Result<(), String> {
     let handle = app.clone();
     app.run_on_main_thread(move || {

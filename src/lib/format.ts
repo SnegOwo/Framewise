@@ -200,26 +200,84 @@ export function plural(n: number, word: string): string {
   return `${n} ${word}${n === 1 ? "" : "s"}`;
 }
 
+type AppMeta = { name: string; description: string; initials?: string };
+
+const APP_META: Record<string, AppMeta> = {
+  "adobe premiere pro": { name: "Premiere Pro", description: "Video editing", initials: "Pr" },
+  "adobe after effects": {
+    name: "After Effects",
+    description: "Motion design and compositing",
+    initials: "Ae",
+  },
+  afterfx: { name: "After Effects", description: "Motion design and compositing", initials: "Ae" },
+  "adobe media encoder": {
+    name: "Media Encoder",
+    description: "Encoding and background renders",
+    initials: "Me",
+  },
+  photoshop: { name: "Photoshop", description: "Image editing and compositing", initials: "Ps" },
+  illustrator: { name: "Illustrator", description: "Vector design", initials: "Ai" },
+  "adobe audition": { name: "Audition", description: "Audio editing and mixing", initials: "Au" },
+  lightroom: { name: "Lightroom", description: "Photo editing", initials: "Lr" },
+  "lightroom classic": {
+    name: "Lightroom Classic",
+    description: "Photo editing and cataloguing",
+    initials: "LrC",
+  },
+  "adobe indesign": { name: "InDesign", description: "Page layout", initials: "Id" },
+  "adobe animate": { name: "Animate", description: "2D animation", initials: "An" },
+  "adobe character animator": {
+    name: "Character Animator",
+    description: "Puppet animation",
+    initials: "Ch",
+  },
+  mpvnet: { name: "mpv.net", description: "Video player", initials: "mp" },
+  mpv: { name: "mpv", description: "Video player", initials: "mp" },
+  vlc: { name: "VLC", description: "Video player", initials: "VL" },
+  chrome: { name: "Google Chrome", description: "Web browser", initials: "Ch" },
+  msedge: { name: "Microsoft Edge", description: "Web browser", initials: "Ed" },
+  firefox: { name: "Firefox", description: "Web browser", initials: "Ff" },
+  zen: { name: "Zen Browser", description: "Web browser", initials: "Ze" },
+  code: { name: "Visual Studio Code", description: "Code editor", initials: "VS" },
+  windowsterminal: { name: "Windows Terminal", description: "Terminal", initials: "Wt" },
+  explorer: { name: "File Explorer", description: "File manager", initials: "Ex" },
+  spotify: { name: "Spotify", description: "Music", initials: "Sp" },
+  slack: { name: "Slack", description: "Team chat", initials: "Sl" },
+  discord: { name: "Discord", description: "Voice and chat", initials: "Di" },
+  obs64: { name: "OBS Studio", description: "Screen recording and streaming", initials: "Ob" },
+  qview: { name: "qView", description: "Image viewer", initials: "qV" },
+  lightshot: { name: "Lightshot", description: "Screenshot tool", initials: "Li" },
+  notepad: { name: "Notepad", description: "Text editor", initials: "No" },
+  blender: { name: "Blender", description: "3D creation", initials: "Bl" },
+  resolve: { name: "DaVinci Resolve", description: "Video editing and color", initials: "DR" },
+  "davinci resolve": {
+    name: "DaVinci Resolve",
+    description: "Video editing and color",
+    initials: "DR",
+  },
+  figma: { name: "Figma", description: "Interface design", initials: "Fi" },
+  notion: { name: "Notion", description: "Notes and docs", initials: "No" },
+  steam: { name: "Steam", description: "Games", initials: "St" },
+  "1password": { name: "1Password", description: "Password manager", initials: "1P" },
+};
+
+function appKey(app: string): string {
+  return app.replace(/\.exe$/i, "").trim().toLowerCase();
+}
+
 export function appLabel(app: string): string {
-  return app.replace(/\.exe$/i, "");
+  return APP_META[appKey(app)]?.name ?? app.replace(/\.exe$/i, "");
+}
+
+export function appDescription(app: string): string {
+  return APP_META[appKey(app)]?.description ?? "Unknown app";
 }
 
 export function appInitial(app: string): string {
-  const clean = appLabel(app);
-  const map: Record<string, string> = {
-    "Adobe Premiere Pro": "Pr",
-    "Adobe After Effects": "Ae",
-    "Photoshop": "Ps",
-    "Illustrator": "Ai",
-    "Adobe Media Encoder": "Me",
-    "Adobe Audition": "Au",
-    "Lightroom": "Lr",
-    "Lightroom Classic": "LrC",
-    "Adobe InDesign": "Id",
-    "Adobe Animate": "An",
-    "Adobe Character Animator": "Ch",
-  };
-  if (map[clean]) return map[clean];
+  const key = appKey(app);
+  const meta = APP_META[key];
+  if (meta?.initials) return meta.initials;
+  const clean = meta?.name ?? app.replace(/\.exe$/i, "");
   const parts = clean.split(/\s+/).filter(Boolean);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return clean.slice(0, 2);

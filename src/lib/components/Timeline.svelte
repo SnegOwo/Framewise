@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Project, Session } from "../types";
   import { appLabel, formatTimestamp, parseDay } from "../format";
+  import { showAppInfo } from "../stores";
 
   type Track = {
     key: string;
@@ -87,12 +88,23 @@
   <div class="body">
     <div class="labels">
       {#each tracks as track (track.key)}
-        <div class="label" class:current={currentApp === track.key}>
-          {#if currentApp === track.key && trackState === "live"}
-            <span class="dot dot-live"></span>
-          {/if}
-          <span class="label-text">{track.label}</span>
-        </div>
+        {#if track.key === "__other"}
+          <div class="label">
+            <span class="label-text">{track.label}</span>
+          </div>
+        {:else}
+          <button
+            class="label"
+            class:current={currentApp === track.key}
+            onclick={() => showAppInfo(track.key)}
+            title={`Inspect ${track.label}`}
+          >
+            {#if currentApp === track.key && trackState === "live"}
+              <span class="dot dot-live"></span>
+            {/if}
+            <span class="label-text">{track.label}</span>
+          </button>
+        {/if}
       {/each}
     </div>
 
@@ -175,11 +187,20 @@
     align-items: center;
     gap: 6px;
     height: 14px;
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: var(--muted);
     font-size: 11.5px;
+    text-align: left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    cursor: pointer;
+  }
+
+  .label:hover {
+    color: var(--text);
   }
 
   .label.current {

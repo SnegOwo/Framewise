@@ -16,6 +16,11 @@ export const loading = writable(true);
 export const fatalError = writable<string | null>(null);
 export const refreshTick = writable(0);
 export const toasts = writable<Toast[]>([]);
+export const appInfo = writable<string | null>(null);
+
+export function showAppInfo(app: string) {
+  appInfo.set(app);
+}
 
 export const projects = derived(boot, ($boot) => $boot?.projects ?? []);
 export const activeProjects = derived(projects, ($projects) =>

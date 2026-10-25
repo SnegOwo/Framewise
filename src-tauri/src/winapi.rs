@@ -42,7 +42,37 @@ pub fn process_name(pid: u32) -> Option<String> {
     }
 }
 
-unsafe fn image_name(handle: HANDLE) -> Option<String> {
+/// Full image path for a currently running executable name (e.g. "mpvnet.exe").
+pub fn process_path(name: &str) -> Option<String> {
+    let wanted = name.trim();
+    if wanted.is_empty() {
+        return None;
+    }
+    for pid in pids() {
+        let Some(path) = process_path_for_pid(pid) else {
+            continue;
+        };
+        let matches = Path::new(&path)
+            .file_name()
+            .map(|n| n.to_string_lossy().eq_ignore_ascii_case(wanted))
+            .unwrap_or(false);
+        if matches {
+            return Some(path);
+        }
+    }
+    None
+}
+
+fn process_path_for_pid(pid: u32) -> Option<String> {
+    unsafe {
+        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
+        let path = image_path(handle);
+        let _ = CloseHandle(handle);
+        path
+    }
+}
+
+unsafe fn image_path(handle: HANDLE) -> Option<String> {
     let mut buf = [0u16; 32768];
     let mut size = buf.len() as u32;
     QueryFullProcessImageNameW(
@@ -52,7 +82,11 @@ unsafe fn image_name(handle: HANDLE) -> Option<String> {
         &mut size,
     )
     .ok()?;
-    let path = String::from_utf16_lossy(&buf[..size as usize]);
+    Some(String::from_utf16_lossy(&buf[..size as usize]))
+}
+
+unsafe fn image_name(handle: HANDLE) -> Option<String> {
+    let path = image_path(handle)?;
     Path::new(&path)
         .file_name()
         .map(|n| n.to_string_lossy().to_string())

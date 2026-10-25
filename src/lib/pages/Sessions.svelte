@@ -9,6 +9,7 @@
     bumpRefresh,
     loadBootstrap,
     refreshTick,
+    showAppInfo,
     toast,
   } from "../stores";
   import { sessionsDay, sessionsProject } from "../router";
@@ -197,8 +198,14 @@
               <span class="time">
                 {formatTimestamp(session.startedAt)}–{formatTimestamp(session.endedAt)}
               </span>
-              <AppIcon app={session.app} size={24} tint={projectFor(session)?.color ?? null} />
-              <span class="app">{appLabel(session.app)}</span>
+              <button
+                class="app-open"
+                onclick={() => showAppInfo(session.app)}
+                title={`Inspect ${appLabel(session.app)}`}
+              >
+                <AppIcon app={session.app} size={24} tint={projectFor(session)?.color ?? null} />
+                <span class="app">{appLabel(session.app)}</span>
+              </button>
 
               <span class="chip-wrap">
                 <button
@@ -359,9 +366,27 @@
     white-space: nowrap;
   }
 
+  .app-open {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 186px;
+    flex: 0 0 186px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+  }
+
+  .app-open:hover .app {
+    color: var(--accent-text);
+  }
+
   .app {
-    width: 150px;
-    flex: 0 0 150px;
+    min-width: 0;
+    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -479,9 +504,9 @@
       flex-basis: 92px;
       font-size: 11.5px;
     }
-    .app {
-      width: 110px;
-      flex-basis: 110px;
+    .app-open {
+      width: 128px;
+      flex-basis: 128px;
     }
   }
 </style>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick } from "svelte";
+  import { fly } from "svelte/transition";
   import Icon from "./Icon.svelte";
   import SessionModal from "./SessionModal.svelte";
   import {
@@ -276,12 +277,23 @@
         autocomplete="off"
         spellcheck="false"
       />
-      <span class="kbd">{open ? "Esc" : "/"}</span>
+      {#if query}
+        <button class="dock-clear" onclick={() => (query = "")} aria-label="Clear search">
+          <Icon name="x" size={12} />
+        </button>
+      {:else}
+        <span class="kbd">{open ? "Esc" : "/"}</span>
+      {/if}
     </div>
   </div>
 
   {#if open}
-    <div class="results" role="listbox" aria-label="Commands">
+    <div
+      class="results"
+      role="listbox"
+      aria-label="Commands"
+      transition:fly={{ y: 8, duration: 220, opacity: 0.25 }}
+    >
       {#if filtered.length === 0}
         <div class="no-results">Nothing matches “{query}”</div>
       {:else}
@@ -296,6 +308,7 @@
             onclick={() => run(action)}
             role="option"
             aria-selected={index === selected}
+            style:animation-delay="{Math.min(index * 16, 160)}ms"
           >
             {#if action.color}
               <span class="dot" style:background={action.color}></span>
@@ -333,6 +346,16 @@
     align-items: stretch;
     gap: 0;
     padding: 6px;
+    animation: dock-pop 340ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes dock-pop {
+    0% {
+      transform: translateX(-50%) scale(0.982);
+    }
+    100% {
+      transform: translateX(-50%) scale(1);
+    }
   }
 
   .dock-row {
@@ -342,6 +365,35 @@
     flex: 1 1 auto;
     width: 100%;
     min-height: 36px;
+  }
+
+  .dock-field {
+    transition: background-color 180ms ease;
+  }
+
+  .dock-field:focus-within {
+    background: var(--surface-3);
+  }
+
+  .dock-clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted-2);
+    transition:
+      background-color 140ms ease,
+      color 140ms ease;
+  }
+
+  .dock-clear:hover {
+    background: var(--surface-4);
+    color: var(--text);
   }
 
   .project {
@@ -395,6 +447,18 @@
     color: var(--text);
     font-size: 14px;
     text-align: left;
+    animation: result-in 220ms ease-out both;
+  }
+
+  @keyframes result-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .result.selected {

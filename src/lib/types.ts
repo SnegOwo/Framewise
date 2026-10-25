@@ -19,6 +19,11 @@ export interface AppTotal {
   adobe: boolean;
 }
 
+export interface AppDetails {
+  name: string;
+  path: string | null;
+}
+
 export interface DayTotal {
   day: string;
   seconds: number;
