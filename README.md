@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>A quiet, offline time tracker for Adobe creatives.</strong><br />
-  Windows 10/11 &nbsp;·&nbsp; Portable by default &nbsp;·&nbsp; MIT
+  Windows 10/11 &nbsp;·&nbsp; MIT
 </p>
 
 <p align="center">
