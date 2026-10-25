@@ -69,7 +69,8 @@ timeline, one heatmap, and reports you can export without an account.
   category, executable and — when it is running — the full path.
 - **A tray that behaves.** Single click opens a mini timer near the tray; double click
   opens the full app. The mini shows **Pin** — pin it to keep it open and drag it
-  anywhere. Unpinned, it behaves like a tray popover and closes when it loses focus.
+  anywhere. Drag the corner to resize it, all the way down to a time-only clock.
+  Unpinned, it behaves like a tray popover and closes when it loses focus.
 - **Portable and private.** One folder, no installer, no network requests, no remote
   fonts, no accounts, no telemetry.
 - **A real theme switch.** Dark and light with a circular reveal from the top-right,
@@ -117,7 +118,8 @@ is installed or portable, with the active data path.
 
 **Mini timer:** a single tray click opens the mini near the tray. It is a popover by
 default and closes on focus loss. Click **Pin** to keep it open, then drag it anywhere
-from the timer body. The pin state is remembered.
+from the timer body. Drag the bottom-right corner to resize it — below 280 × 108 it
+becomes a time-only clock. Pin and size are remembered.
 
 Build the folder with:
 

@@ -34,7 +34,7 @@
 
   let open = $state(false);
   let query = $state("");
-  let selected = $state(0);
+  let selectedId = $state<string | null>(null);
   let inputEl: HTMLInputElement | undefined = $state();
   let dockEl: HTMLDivElement | undefined = $state();
   let resultsEl: HTMLDivElement | undefined = $state();
@@ -155,6 +155,12 @@
     return all.filter((action) => fuzzy(`${action.label} ${action.keywords ?? ""}`, q));
   });
 
+  let selected = $derived.by(() => {
+    if (selectedId == null) return 0;
+    const index = filtered.findIndex((action) => action.id === selectedId);
+    return index >= 0 ? index : 0;
+  });
+
   function fuzzy(text: string, query: string): boolean {
     const haystack = text.toLowerCase();
     if (haystack.includes(query)) return true;
@@ -168,13 +174,7 @@
 
   $effect(() => {
     query;
-    selected = 0;
-  });
-
-  $effect(() => {
-    if (selected > filtered.length - 1) {
-      selected = Math.max(0, filtered.length - 1);
-    }
+    selectedId = null;
   });
 
   $effect(() => {
@@ -186,16 +186,14 @@
   });
 
   function measureThumb() {
-    if (!resultsEl) {
+    if (!resultsEl) return;
+    if (filtered.length === 0) {
       thumb = { top: 0, height: 0, ready: false };
       return;
     }
     const buttons = resultsEl.querySelectorAll<HTMLButtonElement>(".result");
     const button = buttons[selected];
-    if (!button) {
-      thumb = { top: 0, height: 0, ready: false };
-      return;
-    }
+    if (!button) return;
     thumb = {
       top: button.offsetTop,
       height: button.offsetHeight,
@@ -224,7 +222,7 @@
   function close() {
     open = false;
     query = "";
-    selected = 0;
+    selectedId = null;
     commandOpen.set(false);
     inputEl?.blur();
   }
@@ -236,15 +234,21 @@
   }
 
   function onKey(event: KeyboardEvent) {
-    if (event.key === "ArrowDown") {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
-      if (filtered.length) selected = (selected + 1) % filtered.length;
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      if (filtered.length) selected = (selected - 1 + filtered.length) % filtered.length;
+      if (!filtered.length) return;
+      const current = filtered.findIndex((action) => action.id === selectedId);
+      let next: number;
+      if (current < 0) {
+        next = event.key === "ArrowDown" ? 0 : filtered.length - 1;
+      } else {
+        const delta = event.key === "ArrowDown" ? 1 : -1;
+        next = (current + delta + filtered.length) % filtered.length;
+      }
+      selectedId = filtered[next].id;
     } else if (event.key === "Enter") {
       event.preventDefault();
-      run(filtered[selected]);
+      if (filtered.length) run(filtered[selected]);
     } else if (event.key === "Escape") {
       event.preventDefault();
       close();
@@ -346,7 +350,7 @@
           <button
             class="result"
             class:selected={index === selected}
-            onmouseenter={() => (selected = index)}
+            onmouseenter={() => (selectedId = action.id)}
             onclick={() => run(action)}
             role="option"
             aria-selected={index === selected}

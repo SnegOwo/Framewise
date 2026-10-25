@@ -1,20 +1,31 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { getCurrentWindow } from "@tauri-apps/api/window";
-  import { LogicalSize } from "@tauri-apps/api/dpi";
+  import { LogicalPosition, LogicalSize } from "@tauri-apps/api/dpi";
   import Icon from "./Icon.svelte";
   import { activeProject, status, togglePaused } from "../stores";
   import { api } from "../api";
   import { appLabel, formatDuration, formatHMS } from "../format";
 
+  const MIN_W = 150;
+  const MIN_H = 64;
+  const MAX_W = 640;
+  const MAX_H = 420;
+  const COMPACT_W = 280;
+  const COMPACT_H = 108;
+  const SIZE_KEY = "framewise-mini-size";
+
   let clock = $state(Math.floor(Date.now() / 1000));
   let closing = $state(false);
   let pinned = $state(false);
+  let compact = $state(false);
   let resizing = false;
   let startX = 0;
   let startY = 0;
   let startW = 0;
   let startH = 0;
+  let lastW = 0;
+  let lastH = 0;
 
   let live = $derived(
     $status?.trackingSince ? Math.max(0, clock - $status.trackingSince) : 0,
@@ -45,7 +56,78 @@
       pinned = false;
     }
     void api.setMiniPinned(pinned);
+
+    compact = isCompact(window.innerWidth, window.innerHeight);
+    void restoreSize();
+
+    const onResize = () => {
+      if (window.innerWidth <= 1 || window.innerHeight <= 1) return;
+      compact = isCompact(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   });
+
+  function isCompact(width: number, height: number): boolean {
+    return width < COMPACT_W || height < COMPACT_H;
+  }
+
+  function clampSize(width: number, height: number): { width: number; height: number } {
+    return {
+      width: Math.min(MAX_W, Math.max(MIN_W, Math.round(width))),
+      height: Math.min(MAX_H, Math.max(MIN_H, Math.round(height))),
+    };
+  }
+
+  function readSavedSize(): { width: number; height: number } | null {
+    try {
+      const raw = localStorage.getItem(SIZE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { width?: unknown; height?: unknown };
+      if (typeof parsed.width !== "number" || typeof parsed.height !== "number") return null;
+      if (!Number.isFinite(parsed.width) || !Number.isFinite(parsed.height)) return null;
+      return clampSize(parsed.width, parsed.height);
+    } catch {
+      return null;
+    }
+  }
+
+  function saveSize(width: number, height: number) {
+    try {
+      localStorage.setItem(SIZE_KEY, JSON.stringify(clampSize(width, height)));
+    } catch {
+      // ignore
+    }
+  }
+
+  // Restore the last size and keep the window anchored to its bottom-right
+  // corner, so a tiny timer stays next to the tray instead of drifting.
+  async function restoreSize() {
+    const saved = readSavedSize();
+    if (!saved) return;
+    compact = isCompact(saved.width, saved.height);
+    try {
+      const win = getCurrentWindow();
+      const position = await win.outerPosition();
+      const outer = await win.outerSize();
+      await win.setSize(new LogicalSize(saved.width, saved.height));
+      // Outer size includes the invisible resize border, so re-measure it
+      // instead of assuming inner size == outer size.
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      const resizedOuter = await win.outerSize();
+      const scale = await win.scaleFactor();
+      const right = position.x + outer.width;
+      const bottom = position.y + outer.height;
+      await win.setPosition(
+        new LogicalPosition(
+          Math.round((right - resizedOuter.width) / scale),
+          Math.round((bottom - resizedOuter.height) / scale),
+        ),
+      );
+    } catch {
+      // Older builds may not grant the position permission; size still applies.
+    }
+  }
 
   function togglePin() {
     pinned = !pinned;
@@ -68,7 +150,6 @@
   }
 
   function startResize(event: PointerEvent) {
-    if (!pinned) return;
     event.preventDefault();
     event.stopPropagation();
     resizing = true;
@@ -76,18 +157,23 @@
     startY = event.screenY;
     startW = window.innerWidth;
     startH = window.innerHeight;
+    lastW = startW;
+    lastH = startH;
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
   }
 
   function moveResize(event: PointerEvent) {
     if (!resizing) return;
-    const width = Math.min(640, Math.max(320, Math.round(startW + event.screenX - startX)));
-    const height = Math.min(420, Math.max(120, Math.round(startH + event.screenY - startY)));
-    void getCurrentWindow().setSize(new LogicalSize(width, height));
+    const size = clampSize(startW + event.screenX - startX, startH + event.screenY - startY);
+    lastW = size.width;
+    lastH = size.height;
+    compact = isCompact(size.width, size.height);
+    void getCurrentWindow().setSize(new LogicalSize(size.width, size.height));
   }
 
   function endResize(event: PointerEvent) {
     resizing = false;
+    if (lastW > 0 && lastH > 0) saveSize(lastW, lastH);
     try {
       (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
     } catch {
@@ -102,7 +188,7 @@
   }}
 />
 
-<div class="mini" class:closing>
+<div class="mini" class:closing class:compact>
   <div class="drag" data-tauri-drag-region={pinned ? "" : undefined}></div>
 
   <div class="top">
@@ -158,7 +244,7 @@
       {/if}
     </div>
     <div class="pin-note" class:pinned data-tauri-drag-region={pinned ? "" : undefined}>
-      {pinned ? "Pinned · drag & resize" : "Pin to keep open, drag & resize"}
+      {pinned ? "Pinned · drag anywhere" : "Pin to drag · corner to resize"}
     </div>
   </div>
 
@@ -170,8 +256,7 @@
     onpointermove={moveResize}
     onpointerup={endResize}
     onpointercancel={endResize}
-    disabled={!pinned}
-    title={pinned ? "Resize" : "Pin to resize"}
+    title="Resize"
     aria-label="Resize mini timer"
   >
     <svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -206,6 +291,84 @@
 
   .mini.closing {
     animation: mini-out 180ms ease-in both;
+  }
+
+  /* Time-only mode: below 280×108 the timer sheds everything except the
+     clock, and the controls become a hover overlay. */
+  .mini.compact {
+    padding: 0 10px;
+  }
+
+  .mini.compact .drag {
+    display: none;
+  }
+
+  .mini.compact .top {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    left: 4px;
+    z-index: 3;
+    height: 24px;
+    gap: 2px;
+    padding: 0 3px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--surface) 84%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease;
+  }
+
+  .mini.compact:hover .top,
+  .mini.compact:focus-within .top {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mini.compact .top .dot,
+  .mini.compact .top .project,
+  .mini.compact .top .spacer {
+    display: none;
+  }
+
+  .mini.compact .mini-pin {
+    width: 24px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .mini.compact .mini-pin span {
+    display: none;
+  }
+
+  .mini.compact .body {
+    align-items: center;
+    justify-content: center;
+    padding-left: 0;
+    text-align: center;
+  }
+
+  .mini.compact .sub,
+  .mini.compact .pin-note {
+    display: none;
+  }
+
+  .mini.compact .time {
+    font-size: clamp(16px, min(34vh, 19vw), 40px);
+    letter-spacing: -0.04em;
+  }
+
+  .mini.compact .resize-grip {
+    right: 2px;
+    bottom: 2px;
+    width: 18px;
+    height: 18px;
+    opacity: 0;
+  }
+
+  .mini.compact:hover .resize-grip,
+  .mini.compact:focus-within .resize-grip {
+    opacity: 0.75;
   }
 
   @keyframes mini-pop {

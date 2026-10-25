@@ -151,9 +151,11 @@ pub fn show_mini_window(
     )
     .title("Framewise")
     .inner_size(360.0, 132.0)
-    .min_inner_size(320.0, 120.0)
+    .min_inner_size(150.0, 64.0)
     .max_inner_size(640.0, 420.0)
     .resizable(true)
+    .maximizable(false)
+    .minimizable(false)
     .decorations(false)
     .always_on_top(true)
     .skip_taskbar(true);
