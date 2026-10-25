@@ -84,6 +84,8 @@ export interface Status {
   weekByProject: ProjectTotal[];
   todayByApp: AppTotal[];
   renderActive: boolean;
+  activeProjectHasTools: boolean;
+  currentAppFocused: boolean | null;
 }
 
 export interface Session {
@@ -137,12 +139,21 @@ export interface SessionFilter {
   limit?: number | null;
 }
 
+export interface ProjectAppTotal {
+  app: string;
+  seconds: number;
+  focused: boolean | null;
+}
+
 export interface ProjectDetail {
   project: Project;
   totalSeconds: number;
   todaySeconds: number;
   weekSeconds: number;
-  perApp: AppTotal[];
+  focusedSeconds: number;
+  unfocusedSeconds: number;
+  tools: string[];
+  perApp: ProjectAppTotal[];
   perDay: DayTotal[];
   firstActivity: number | null;
   lastActivity: number | null;

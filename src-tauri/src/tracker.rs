@@ -22,6 +22,7 @@ pub struct ActiveSegment {
     pub app: String,
     pub project_id: Option<i64>,
     pub adobe: bool,
+    pub focused: Option<bool>,
     pub source: String,
     pub started_at: i64,
 }
@@ -219,14 +220,17 @@ fn tick(app: &AppHandle) {
         &cfg.adobe,
         &cfg.ignore,
         cfg.active_project_id,
+        &cfg.active_project_tools,
     );
 
     let mut switched = false;
     match (&inner.current, &desired) {
         (Some(cur), Some(want))
-            if cur.app.eq_ignore_ascii_case(&want.0) && cur.project_id == want.1 => {}
+            if cur.app.eq_ignore_ascii_case(&want.0)
+                && cur.project_id == want.1
+                && cur.focused == want.2 => {}
         (Some(_), _) => {
-            // Switching apps, project, or walking away from a tracked app.
+            // Switching apps, project, tools or walking away from a tracked app.
             let cur = inner.current.take();
             close_segment(&state.db, cur, now);
             switched = true;
@@ -235,7 +239,7 @@ fn tick(app: &AppHandle) {
     }
 
     if inner.current.is_none() {
-        if let Some((app_name, project_id)) = desired.clone() {
+        if let Some((app_name, project_id, focused)) = desired.clone() {
             let adobe = cfg.adobe.contains(&app_name.to_lowercase());
             let start = if resumed_from_gap || switched {
                 now
@@ -245,7 +249,9 @@ fn tick(app: &AppHandle) {
                 prev_epoch.min(now)
             };
             if start <= now {
-                match start_segment(&state.db, &app_name, project_id, adobe, "auto", start) {
+                match start_segment(
+                    &state.db, &app_name, project_id, adobe, focused, "auto", start,
+                ) {
                     Ok(seg) => inner.current = Some(seg),
                     Err(e) => eprintln!("framewise: could not open session: {e}"),
                 }
@@ -276,11 +282,17 @@ fn tick(app: &AppHandle) {
                     prev_epoch.min(now)
                 };
                 if start <= now {
+                    let render_focused = if cfg.active_project_tools.is_empty() {
+                        None
+                    } else {
+                        Some(cfg.active_project_tools.contains("adobe media encoder.exe"))
+                    };
                     if let Ok(seg) = start_segment(
                         &state.db,
                         "Adobe Media Encoder.exe",
                         cfg.active_project_id,
                         true,
+                        render_focused,
                         "render",
                         start,
                     ) {
@@ -324,21 +336,24 @@ fn tick(app: &AppHandle) {
     inner.last_epoch = now;
 }
 
+#[allow(clippy::too_many_arguments)]
 fn start_segment(
     db: &Db,
     app: &str,
     project_id: Option<i64>,
     adobe: bool,
+    focused: Option<bool>,
     source: &str,
     started_at: i64,
 ) -> anyhow::Result<ActiveSegment> {
     let conn = db.lock();
-    let id = db::insert_open_session(&conn, app, project_id, started_at, adobe, source)?;
+    let id = db::insert_open_session(&conn, app, project_id, started_at, adobe, source, focused)?;
     Ok(ActiveSegment {
         id,
         app: app.to_string(),
         project_id,
         adobe,
+        focused,
         source: source.to_string(),
         started_at,
     })
@@ -395,14 +410,16 @@ fn notify_goals(app: &AppHandle, db: &Db) {
 }
 
 /// Attribution rules, kept pure so they are easy to test.
-/// Ignored apps are never tracked. Adobe apps get the active project.
-/// Everything else is tracked for general stats with no project.
+/// Ignored apps are never tracked. Adobe apps get the active project. Once a
+/// project has tools, every tracked app is credited to it and marked focused
+/// (in the tool list) or other so project focus can be measured.
 pub fn attribution(
     app: Option<&str>,
     adobe_list: &std::collections::HashSet<String>,
     ignore_list: &std::collections::HashSet<String>,
     active_project: Option<i64>,
-) -> Option<(String, Option<i64>)> {
+    active_tools: &std::collections::HashSet<String>,
+) -> Option<(String, Option<i64>, Option<bool>)> {
     let app = app?.trim();
     if app.is_empty() {
         return None;
@@ -412,10 +429,18 @@ pub fn attribution(
         return None;
     }
     let is_adobe = adobe_list.contains(&key);
-    Some((
-        app.to_string(),
-        if is_adobe { active_project } else { None },
-    ))
+    let has_tools = !active_tools.is_empty();
+    let project_id = if active_project.is_some() && (is_adobe || has_tools) {
+        active_project
+    } else {
+        None
+    };
+    let focused = if project_id.is_some() && has_tools {
+        Some(active_tools.contains(&key))
+    } else {
+        None
+    };
+    Some((app.to_string(), project_id, focused))
 }
 
 pub fn idle_cutoff(now: i64, idle_ms: u64, _timeout_secs: i64, segment_start: i64) -> i64 {
@@ -440,22 +465,64 @@ mod tests {
     fn adobe_time_goes_to_the_active_project() {
         let adobe = set(&["Adobe Premiere Pro.exe", "Photoshop.exe"]);
         let ignore = set(&["explorer.exe"]);
-        let got = attribution(Some("Adobe Premiere Pro.exe"), &adobe, &ignore, Some(42));
-        assert_eq!(got, Some(("Adobe Premiere Pro.exe".into(), Some(42))));
+        let got = attribution(
+            Some("Adobe Premiere Pro.exe"),
+            &adobe,
+            &ignore,
+            Some(42),
+            &HashSet::new(),
+        );
+        assert_eq!(got, Some(("Adobe Premiere Pro.exe".into(), Some(42), None)));
     }
 
     #[test]
     fn adobe_without_project_is_unassigned() {
         let adobe = set(&["Photoshop.exe"]);
-        let got = attribution(Some("Photoshop.exe"), &adobe, &HashSet::new(), None);
-        assert_eq!(got, Some(("Photoshop.exe".into(), None)));
+        let got = attribution(
+            Some("Photoshop.exe"),
+            &adobe,
+            &HashSet::new(),
+            None,
+            &HashSet::new(),
+        );
+        assert_eq!(got, Some(("Photoshop.exe".into(), None, None)));
     }
 
     #[test]
-    fn non_adobe_is_never_attributed_to_a_project() {
+    fn non_adobe_is_unassigned_without_project_tools() {
         let adobe = set(&["Photoshop.exe"]);
-        let got = attribution(Some("chrome.exe"), &adobe, &HashSet::new(), Some(7));
-        assert_eq!(got, Some(("chrome.exe".into(), None)));
+        let got = attribution(
+            Some("chrome.exe"),
+            &adobe,
+            &HashSet::new(),
+            Some(7),
+            &HashSet::new(),
+        );
+        assert_eq!(got, Some(("chrome.exe".into(), None, None)));
+    }
+
+    #[test]
+    fn project_tools_mark_selected_and_other_apps() {
+        let adobe = set(&["Photoshop.exe"]);
+        let tools = set(&["Photoshop.exe", "zen.exe"]);
+        assert_eq!(
+            attribution(
+                Some("Photoshop.exe"),
+                &adobe,
+                &HashSet::new(),
+                Some(7),
+                &tools
+            ),
+            Some(("Photoshop.exe".into(), Some(7), Some(true)))
+        );
+        assert_eq!(
+            attribution(Some("zen.exe"), &adobe, &HashSet::new(), Some(7), &tools),
+            Some(("zen.exe".into(), Some(7), Some(true)))
+        );
+        assert_eq!(
+            attribution(Some("chrome.exe"), &adobe, &HashSet::new(), Some(7), &tools),
+            Some(("chrome.exe".into(), Some(7), Some(false)))
+        );
     }
 
     #[test]
@@ -463,11 +530,23 @@ mod tests {
         let adobe = set(&["Photoshop.exe"]);
         let ignore = set(&["Photoshop.exe"]);
         assert_eq!(
-            attribution(Some("Photoshop.exe"), &adobe, &ignore, Some(1)),
+            attribution(
+                Some("Photoshop.exe"),
+                &adobe,
+                &ignore,
+                Some(1),
+                &HashSet::new()
+            ),
             None
         );
         assert_eq!(
-            attribution(Some("PHOTOSHOP.EXE"), &adobe, &ignore, Some(1)),
+            attribution(
+                Some("PHOTOSHOP.EXE"),
+                &adobe,
+                &ignore,
+                Some(1),
+                &HashSet::new()
+            ),
             None
         );
     }
@@ -475,11 +554,23 @@ mod tests {
     #[test]
     fn ignores_empty_or_missing_foreground() {
         assert_eq!(
-            attribution(None, &HashSet::new(), &HashSet::new(), Some(1)),
+            attribution(
+                None,
+                &HashSet::new(),
+                &HashSet::new(),
+                Some(1),
+                &HashSet::new()
+            ),
             None
         );
         assert_eq!(
-            attribution(Some("   "), &HashSet::new(), &HashSet::new(), Some(1)),
+            attribution(
+                Some("   "),
+                &HashSet::new(),
+                &HashSet::new(),
+                Some(1),
+                &HashSet::new()
+            ),
             None
         );
     }

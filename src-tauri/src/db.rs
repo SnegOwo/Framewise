@@ -129,6 +129,14 @@ impl Db {
                 * 60,
             active_project_id,
             active_project_name,
+            active_project_tools: active_project_id
+                .map(|id| {
+                    project_tools_conn(&conn, id)
+                        .unwrap_or_default()
+                        .into_iter()
+                        .collect()
+                })
+                .unwrap_or_default(),
             count_media_encoder_background: setting_bool(
                 &conn,
                 "count_media_encoder_background",
@@ -224,6 +232,7 @@ impl Db {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn save_session(
         &self,
         id: Option<i64>,
@@ -232,6 +241,7 @@ impl Db {
         started_at: i64,
         ended_at: i64,
         adobe_override: Option<bool>,
+        focused: Option<bool>,
     ) -> Result<()> {
         let mut conn = self.lock();
         let tx = conn.transaction()?;
@@ -246,7 +256,9 @@ impl Db {
             tx.execute("DELETE FROM sessions WHERE id = ?1", params![id])?;
         }
         let adobe = adobe_override.unwrap_or_else(|| is_adobe_name(app));
-        insert_interval(&tx, app, project_id, started_at, ended_at, adobe, "manual")?;
+        insert_interval(
+            &tx, app, project_id, started_at, ended_at, adobe, "manual", focused,
+        )?;
         tx.commit()?;
         Ok(())
     }
@@ -342,7 +354,17 @@ impl Db {
         )?;
         let today_seconds = sum_range(&conn, today, today, Some(id), false)?;
         let week_seconds = sum_range(&conn, &week_start, &week_end, Some(id), false)?;
-        let per_app = per_app(&conn, today, today, Some(id), false)?;
+        let per_app = per_app_detail(&conn, id)?;
+        let (focused, unfocused): (i64, i64) = conn.query_row(
+            "SELECT
+                COALESCE(SUM(CASE WHEN in_tools = 1 THEN ended_at - started_at ELSE 0 END), 0),
+                COALESCE(SUM(CASE WHEN in_tools = 0 THEN ended_at - started_at ELSE 0 END), 0)
+             FROM sessions
+             WHERE ended_at > started_at AND project_id = ?1",
+            params![id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )?;
+        let tools = project_tools_conn(&conn, id)?;
         let per_day = per_day(&conn, "0000-01-01", "9999-12-31", Some(id), false)?;
         let (first, last, count): (Option<i64>, Option<i64>, i64) = conn.query_row(
             "SELECT MIN(started_at), MAX(ended_at), COUNT(*) FROM sessions
@@ -355,6 +377,9 @@ impl Db {
             total_seconds: total,
             today_seconds,
             week_seconds,
+            focused_seconds: focused,
+            unfocused_seconds: unfocused,
+            tools,
             per_app,
             per_day,
             first_activity: first,
@@ -387,6 +412,14 @@ impl Db {
 
     pub fn replace_app_rules(&self, kind: &str, apps: &[String]) -> Result<()> {
         replace_app_rules(&self.lock(), kind, apps)
+    }
+
+    pub fn project_tools(&self, project_id: i64) -> Result<Vec<String>> {
+        project_tools_conn(&self.lock(), project_id)
+    }
+
+    pub fn set_project_tools(&self, project_id: i64, apps: &[String]) -> Result<()> {
+        set_project_tools(&self.lock(), project_id, apps)
     }
 
     pub fn checkpoint(&self) -> Result<()> {
@@ -445,6 +478,7 @@ pub struct RuntimeConfig {
     pub idle_seconds: i64,
     pub active_project_id: Option<i64>,
     pub active_project_name: Option<String>,
+    pub active_project_tools: std::collections::HashSet<String>,
     pub count_media_encoder_background: bool,
     pub ignore: std::collections::HashSet<String>,
     pub adobe: std::collections::HashSet<String>,
@@ -491,7 +525,13 @@ pub fn ensure_schema(conn: &Connection) -> Result<()> {
             day TEXT NOT NULL,
             adobe INTEGER NOT NULL DEFAULT 0,
             source TEXT NOT NULL DEFAULT 'auto',
+            in_tools INTEGER,
             created_at INTEGER NOT NULL
+         );
+         CREATE TABLE IF NOT EXISTS project_tools (
+            project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+            app TEXT NOT NULL,
+            PRIMARY KEY (project_id, app)
          );
          CREATE TABLE IF NOT EXISTS goals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -526,12 +566,27 @@ pub fn ensure_schema(conn: &Connection) -> Result<()> {
          CREATE INDEX IF NOT EXISTS idx_sessions_day_project ON sessions(day, project_id);
          CREATE INDEX IF NOT EXISTS idx_sessions_app ON sessions(app);",
     )?;
+    if !has_column(conn, "sessions", "in_tools")? {
+        conn.execute("ALTER TABLE sessions ADD COLUMN in_tools INTEGER", [])?;
+    }
     conn.execute(
-        "INSERT INTO meta(key, value) VALUES('schema_version','1')
+        "INSERT INTO meta(key, value) VALUES('schema_version','2')
          ON CONFLICT(key) DO UPDATE SET value = excluded.value",
         [],
     )?;
     Ok(())
+}
+
+fn has_column(conn: &Connection, table: &str, column: &str) -> Result<bool> {
+    let mut stmt = conn.prepare(&format!("PRAGMA table_info({table})"))?;
+    let mut rows = stmt.query([])?;
+    while let Some(row) = rows.next()? {
+        let name: String = row.get(1)?;
+        if name.eq_ignore_ascii_case(column) {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn seed(conn: &Connection) -> Result<()> {
@@ -779,6 +834,7 @@ pub fn normalize_color(color: &str) -> String {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn insert_interval(
     conn: &Connection,
     app: &str,
@@ -787,14 +843,25 @@ pub fn insert_interval(
     ended_at: i64,
     adobe: bool,
     source: &str,
+    focused: Option<bool>,
 ) -> Result<usize> {
     let now = Local::now().timestamp();
     let mut count = 0;
     for (start, end, day) in split_at_midnight(started_at, ended_at) {
         conn.execute(
-            "INSERT INTO sessions(app, project_id, started_at, ended_at, day, adobe, source, created_at)
-             VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            params![app, project_id, start, end, day, adobe as i64, source, now],
+            "INSERT INTO sessions(app, project_id, started_at, ended_at, day, adobe, source, in_tools, created_at)
+             VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            params![
+                app,
+                project_id,
+                start,
+                end,
+                day,
+                adobe as i64,
+                source,
+                focused.map(|value| value as i64),
+                now
+            ],
         )?;
         count += 1;
     }
@@ -808,11 +875,12 @@ pub fn insert_open_session(
     started_at: i64,
     adobe: bool,
     source: &str,
+    focused: Option<bool>,
 ) -> Result<i64> {
     let now = Local::now().timestamp();
     conn.execute(
-        "INSERT INTO sessions(app, project_id, started_at, ended_at, day, adobe, source, created_at)
-         VALUES(?1, ?2, ?3, ?3, ?4, ?5, ?6, ?7)",
+        "INSERT INTO sessions(app, project_id, started_at, ended_at, day, adobe, source, in_tools, created_at)
+         VALUES(?1, ?2, ?3, ?3, ?4, ?5, ?6, ?7, ?8)",
         params![
             app,
             project_id,
@@ -820,6 +888,7 @@ pub fn insert_open_session(
             local_day(started_at),
             adobe as i64,
             source,
+            focused.map(|value| value as i64),
             now
         ],
     )?;
@@ -894,6 +963,59 @@ pub fn per_app(
         },
     )?;
     Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+}
+
+fn per_app_detail(conn: &Connection, project_id: i64) -> Result<Vec<ProjectAppTotal>> {
+    let mut stmt = conn.prepare(
+        "SELECT app, SUM(ended_at - started_at) AS secs, in_tools
+         FROM sessions
+         WHERE ended_at > started_at AND project_id = ?1
+         GROUP BY app, in_tools
+         ORDER BY secs DESC, lower(app) ASC",
+    )?;
+    let rows = stmt.query_map(params![project_id], |r| {
+        Ok(ProjectAppTotal {
+            app: r.get(0)?,
+            seconds: r.get(1)?,
+            focused: r.get::<_, Option<i64>>(2)?.map(|value| value != 0),
+        })
+    })?;
+    Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+}
+
+fn project_tools_conn(conn: &Connection, project_id: i64) -> Result<Vec<String>> {
+    let mut stmt = conn
+        .prepare("SELECT app FROM project_tools WHERE project_id = ?1 ORDER BY lower(app) ASC")?;
+    let rows = stmt.query_map(params![project_id], |r| r.get::<_, String>(0))?;
+    Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+}
+
+fn normalize_tools(apps: &[String]) -> Vec<String> {
+    let mut out = std::collections::BTreeSet::new();
+    for app in apps {
+        let value = app.trim().to_lowercase();
+        if !value.is_empty() {
+            out.insert(value);
+        }
+    }
+    out.into_iter().collect()
+}
+
+pub fn set_project_tools(conn: &Connection, project_id: i64, apps: &[String]) -> Result<()> {
+    get_project(conn, project_id)?;
+    let tx = conn.unchecked_transaction()?;
+    tx.execute(
+        "DELETE FROM project_tools WHERE project_id = ?1",
+        params![project_id],
+    )?;
+    for app in normalize_tools(apps) {
+        tx.execute(
+            "INSERT OR IGNORE INTO project_tools(project_id, app) VALUES(?1, ?2)",
+            params![project_id, app],
+        )?;
+    }
+    tx.commit()?;
+    Ok(())
 }
 
 pub fn per_project(
@@ -1412,6 +1534,7 @@ mod tests {
             ts("2026-10-20", 10, 0),
             true,
             "auto",
+            None,
         )
         .unwrap();
         insert_interval(
@@ -1422,6 +1545,7 @@ mod tests {
             ts("2026-10-20", 11, 0),
             true,
             "auto",
+            None,
         )
         .unwrap();
         insert_interval(
@@ -1432,6 +1556,7 @@ mod tests {
             ts("2026-10-20", 11, 30),
             false,
             "auto",
+            None,
         )
         .unwrap();
         insert_interval(
@@ -1442,6 +1567,7 @@ mod tests {
             ts("2026-10-21", 15, 0),
             true,
             "auto",
+            None,
         )
         .unwrap();
 
@@ -1462,6 +1588,64 @@ mod tests {
     }
 
     #[test]
+    fn project_tools_are_normalized_and_focus_is_split() {
+        let conn = test_db();
+        let p = project(&conn, "Focus");
+        set_project_tools(
+            &conn,
+            p,
+            &[
+                " Photoshop.EXE ".into(),
+                "zen.exe".into(),
+                "photoshop.exe".into(),
+            ],
+        )
+        .unwrap();
+        assert_eq!(
+            project_tools_conn(&conn, p).unwrap(),
+            vec!["photoshop.exe".to_string(), "zen.exe".to_string()]
+        );
+        insert_interval(
+            &conn,
+            "Photoshop.exe",
+            Some(p),
+            ts("2026-10-20", 9, 0),
+            ts("2026-10-20", 10, 0),
+            true,
+            "auto",
+            Some(true),
+        )
+        .unwrap();
+        insert_interval(
+            &conn,
+            "chrome.exe",
+            Some(p),
+            ts("2026-10-20", 10, 0),
+            ts("2026-10-20", 10, 30),
+            false,
+            "auto",
+            Some(false),
+        )
+        .unwrap();
+        let apps = per_app_detail(&conn, p).unwrap();
+        assert_eq!(apps.len(), 2);
+        assert_eq!(apps[0].focused, Some(true));
+        assert_eq!(apps[1].focused, Some(false));
+        let (focused, unfocused): (i64, i64) = conn
+            .query_row(
+                "SELECT
+                    COALESCE(SUM(CASE WHEN in_tools = 1 THEN ended_at - started_at ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN in_tools = 0 THEN ended_at - started_at ELSE 0 END), 0)
+                 FROM sessions WHERE project_id = ?1",
+                params![p],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap();
+        assert_eq!(focused, 3600);
+        assert_eq!(unfocused, 1800);
+    }
+
+    #[test]
     fn midnight_split_lands_in_both_days() {
         let conn = test_db();
         let p = project(&conn, "Night shift");
@@ -1473,6 +1657,7 @@ mod tests {
             ts("2026-10-21", 0, 15),
             true,
             "auto",
+            None,
         )
         .unwrap();
         let d1 = sum_range(&conn, "2026-10-20", "2026-10-20", Some(p), false).unwrap();
@@ -1494,6 +1679,7 @@ mod tests {
             ts("2026-10-20", 10, 0),
             true,
             "auto",
+            None,
         )
         .unwrap();
         let id: i64 = conn
@@ -1546,6 +1732,7 @@ mod tests {
             ts("2026-10-19", 13, 0),
             true,
             "auto",
+            None,
         )
         .unwrap();
         insert_interval(
@@ -1556,6 +1743,7 @@ mod tests {
             ts("2026-10-23", 12, 0),
             true,
             "auto",
+            None,
         )
         .unwrap();
         let progress = progress_for_goals(&conn, &goals, "2026-10-24").unwrap();
@@ -1578,6 +1766,7 @@ mod tests {
             ts("2026-10-24", 9, 0),
             true,
             "auto",
+            None,
         )
         .unwrap();
         let id = insert_open_session(
@@ -1587,6 +1776,7 @@ mod tests {
             ts("2026-10-24", 10, 0),
             true,
             "auto",
+            None,
         )
         .unwrap();
         let live = vec![LiveSlice {
@@ -1607,7 +1797,8 @@ mod tests {
     #[test]
     fn cleanup_removes_empty_sessions() {
         let conn = test_db();
-        let id = insert_open_session(&conn, "Photoshop.exe", None, 1000, true, "auto").unwrap();
+        let id =
+            insert_open_session(&conn, "Photoshop.exe", None, 1000, true, "auto", None).unwrap();
         cleanup(&conn).unwrap();
         let count: i64 = conn
             .query_row(

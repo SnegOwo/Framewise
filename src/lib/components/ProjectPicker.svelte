@@ -1,7 +1,8 @@
 <script lang="ts">
   import { fly } from "svelte/transition";
   import Icon from "./Icon.svelte";
-  import { activeProject, activeProjects, switchProject } from "../stores";
+  import { activeProject, activeProjects, loadBootstrap, switchProject, toast } from "../stores";
+  import { api, errMessage } from "../api";
   import { requestNewProject } from "../router";
   import { motionDuration } from "../motion";
 
@@ -27,6 +28,17 @@
     }),
   );
 
+  let newName = $derived(query.trim());
+  let canCreate = $derived(
+    newName.length > 0 &&
+      filtered.length === 0 &&
+      !$activeProjects.some(
+        (project) => project.name.toLowerCase() === newName.toLowerCase(),
+      ),
+  );
+
+  let creating = $state(false);
+
   $effect(() => {
     if (!open) {
       query = "";
@@ -42,6 +54,35 @@
   async function choose(projectId: number | null) {
     open = false;
     await switchProject(projectId);
+  }
+
+  async function createFromQuery() {
+    if (!canCreate || creating) return;
+    const name = newName;
+    creating = true;
+    try {
+      const project = await api.createProject(name, null, "#7dd3fc");
+      await loadBootstrap();
+      open = false;
+      query = "";
+      await switchProject(project.id);
+      toast("Project created.", "success");
+    } catch (cause) {
+      toast(errMessage(cause), "error");
+    } finally {
+      creating = false;
+    }
+  }
+
+  function onSearchKey(event: KeyboardEvent) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (canCreate) void createFromQuery();
+      else if (filtered.length) void choose(filtered[0].id);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      open = false;
+    }
   }
 </script>
 
@@ -78,8 +119,20 @@
     >
       <div class="search">
         <Icon name="search" size={14} />
-        <input bind:this={searchInput} bind:value={query} placeholder="Find a project" />
+        <input
+          bind:this={searchInput}
+          bind:value={query}
+          placeholder="Find a project"
+          onkeydown={onSearchKey}
+        />
       </div>
+      {#if canCreate}
+        <button class="menu-item create" onclick={() => void createFromQuery()} disabled={creating}>
+          <span class="create-icon"><Icon name="plus" size={12} /></span>
+          <span class="pname">Create “{newName}”</span>
+          <span class="create-hint">new project</span>
+        </button>
+      {/if}
       <div class="list">
         {#each filtered as project (project.id)}
           <button
@@ -98,8 +151,10 @@
             {/if}
           </button>
         {/each}
-        {#if filtered.length === 0}
-          <div class="no-match">No matching project</div>
+        {#if filtered.length === 0 && !canCreate}
+          <div class="no-match">
+            {query.trim() ? "No matching project." : "No projects yet."}
+          </div>
         {/if}
         <div class="menu-sep"></div>
         <button
@@ -227,6 +282,47 @@
     padding: 14px 10px;
     color: var(--muted-2);
     font-size: 13px;
+  }
+
+  .create {
+    width: 100%;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+    color: var(--text);
+    text-align: left;
+  }
+
+  .create:hover {
+    background: var(--accent-soft);
+  }
+
+  .create .pname {
+    font-weight: 500;
+  }
+
+  .create-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+  }
+
+  .create-hint {
+    margin-left: auto;
+    color: var(--accent-text);
+    font-size: 10px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .create:disabled {
+    opacity: 0.6;
   }
 
   .new {

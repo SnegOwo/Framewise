@@ -10,8 +10,8 @@ it quiet, offline and predictable.
 - **Privacy by default.** Never collect window titles, keystrokes, clipboard data or
   file contents. The tracker records foreground executable names and time only.
 - **Do not break tracking semantics.** Midnight splitting, idle cutoff, lock/sleep
-  handling and Adobe attribution are covered by tests. Change them deliberately and
-  with tests.
+  handling, Adobe attribution and project focus tools are covered by tests. Change
+  them deliberately and with tests.
 - **One visual language.** Use the tokens in `src/app.css`; accent for live/progress,
   project colours for projects. No gradients/glass for decoration, no emoji.
 - **Keep it small.** If a screen is not better with an element, remove the element.
@@ -64,7 +64,7 @@ All four should be clean. UI changes should also be checked in dark and light mo
 Backend tests live beside the code in `#[cfg(test)]` modules. Add cases for:
 - midnight and multi-day intervals
 - idle and sleep gaps
-- attribution and ignored apps
+- attribution, focus tools and ignored apps
 - goal progress and streaks
 - report grouping and CSV escaping
 - session reassignment

@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { Project, ProjectDetail } from "../types";
+  import { open as openFileDialog } from "@tauri-apps/plugin-dialog";
   import { api, errMessage } from "../api";
+  import AppIcon from "../components/AppIcon.svelte";
   import {
     activeProject,
     boot,
@@ -15,6 +17,7 @@
     clampPercent,
     daysAgo,
     fillDays,
+    appLabel,
     formatDuration,
     formatRange,
     todayStr,
@@ -89,6 +92,35 @@
   let detailAppMax = $derived(
     Math.max(...(detail?.perApp ?? []).map((row) => row.seconds), 1),
   );
+  let focusTotal = $derived(
+    (detail?.focusedSeconds ?? 0) + (detail?.unfocusedSeconds ?? 0),
+  );
+  let focusPercent = $derived(
+    focusTotal > 0
+      ? Math.round(((detail?.focusedSeconds ?? 0) / focusTotal) * 100)
+      : 0,
+  );
+  let focusedApps = $derived(
+    (detail?.perApp ?? []).filter((row) => row.focused === true),
+  );
+  let otherApps = $derived(
+    (detail?.perApp ?? []).filter((row) => row.focused !== true),
+  );
+  let toolSuggestions = $derived.by(() => {
+    if (!detail) return [];
+    const tools = new Set(detail.tools.map((tool) => tool.toLowerCase()));
+    const seen = new Set<string>();
+    return detail.perApp
+      .map((row) => row.app)
+      .filter((app) => {
+        const key = app.toLowerCase();
+        if (tools.has(key) || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 4);
+  });
+  let toolBusy = $state(false);
 
   async function refresh() {
     await loadBootstrap();
@@ -190,6 +222,50 @@
     }
   }
 
+  async function saveTools(apps: string[]) {
+    if (!detail || toolBusy) return;
+    toolBusy = true;
+    try {
+      await api.setProjectTools(detail.project.id, apps);
+      await refreshDetail(detail.project.id);
+      await loadBootstrap();
+    } catch (cause) {
+      toast(errMessage(cause), "error");
+    } finally {
+      toolBusy = false;
+    }
+  }
+
+  function addTool(app: string) {
+    if (!detail) return;
+    void saveTools([...detail.tools, app]);
+  }
+
+  function removeTool(app: string) {
+    if (!detail) return;
+    void saveTools(detail.tools.filter((item) => item !== app));
+  }
+
+  async function pickTools() {
+    try {
+      const selected = await openFileDialog({
+        title: "Choose focus tools",
+        multiple: true,
+        filters: [{ name: "Applications", extensions: ["exe"] }],
+      });
+      if (!selected) return;
+      const paths = Array.isArray(selected) ? selected : [selected];
+      const names = paths
+        .map((path) => path.split(/[\\/]/).pop() ?? "")
+        .filter(Boolean);
+      if (names.length && detail) {
+        await saveTools([...new Set([...detail.tools, ...names])]);
+      }
+    } catch (cause) {
+      toast(errMessage(cause), "error");
+    }
+  }
+
   function filterSessions(project: Project) {
     sessionsProject.set(project.id);
     navigate("sessions");
@@ -223,7 +299,7 @@
     <header class="detail-hero reveal">
       <div class="detail-total">{formatDuration(detail.totalSeconds)}</div>
       <div class="detail-name">
-        {detail.project.name}{#if detail.project.client}<span class="detail-client"> — {detail.project.client}</span>{/if}
+        {detail.project.name}{#if detail.project.client}<span class="detail-client">{" — "}{detail.project.client}</span>{/if}
       </div>
     </header>
 
@@ -253,27 +329,120 @@
       </div>
     </div>
 
+    {#if focusTotal > 0}
+      <section class="section focus-section">
+        <div class="focus-top">
+          <div>
+            <div class="eyebrow">Focus</div>
+            <div class="focus-number">{focusPercent}<span>%</span></div>
+          </div>
+          <p class="focus-copy">
+            {formatDuration(detail.focusedSeconds)} in selected tools,
+            {formatDuration(detail.unfocusedSeconds)} in other apps.
+          </p>
+        </div>
+        <div class="focus-bar" role="img" aria-label={`${focusPercent}% of project time in selected tools`}>
+          <span class="focus-fill" style:width="{focusPercent}%"></span>
+          <span class="other-fill"></span>
+        </div>
+        <div class="focus-legend">
+          <span><i class="focus-key on"></i> Selected tools</span>
+          <span><i class="focus-key off"></i> Other apps</span>
+        </div>
+      </section>
+    {/if}
+
+    <section class="section tools-section">
+      <Rule />
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">Focus tools</div>
+          <p class="section-note">Selected apps count as focused while this project is active. Anything else is still tracked, but marked other.</p>
+        </div>
+        <button class="chip-add-button" onclick={() => void pickTools()} disabled={toolBusy}>
+          <Icon name="plus" size={13} /> Add .exe
+        </button>
+      </div>
+      <div class="tool-chips">
+        {#each detail.tools as tool (tool)}
+          <span class="tool-chip">
+            <AppIcon app={tool} size={16} />
+            <span class="tool-name">{appLabel(tool)}</span>
+            <button class="tool-x" onclick={() => removeTool(tool)} aria-label={`Remove ${appLabel(tool)}`}>
+              <Icon name="x" size={10} />
+            </button>
+          </span>
+        {/each}
+        {#if detail.tools.length === 0}
+          <span class="tool-empty">No tools yet. Add the apps that count as real work.</span>
+        {/if}
+      </div>
+      {#if toolSuggestions.length > 0}
+        <div class="tool-suggest">
+          <span>Quick add</span>
+          {#each toolSuggestions as app (app)}
+            <button onclick={() => addTool(app)}>+ {appLabel(app)}</button>
+          {/each}
+        </div>
+      {/if}
+    </section>
+
     <section class="section">
       <Rule />
       <div class="eyebrow">Applications</div>
-      <div class="apps">
-        {#each detail.perApp.slice(0, 6) as app (app.app)}
-          <div class="app-row">
-            <span class="app-name">{app.app.replace(/\.exe$/i, "")}</span>
-            <span class="app-track">
-              <span
-                class="app-fill"
-                style:transform="scaleX({app.seconds / detailAppMax})"
-                style:background={detail.project.color}
-              ></span>
-            </span>
-            <span class="app-time">{formatDuration(app.seconds)}</span>
-          </div>
-        {/each}
-        {#if detail.perApp.length === 0}
-          <div class="empty-sub">Nothing tracked yet.</div>
-        {/if}
-      </div>
+      {#if focusTotal > 0}
+        <div class="app-group">
+          <span><i class="focus-key on"></i> Selected tools</span>
+          <span>{formatDuration(detail.focusedSeconds)}</span>
+        </div>
+        <div class="apps">
+          {#each focusedApps.slice(0, 8) as app (app.app)}
+            <div class="app-row">
+              <span class="app-name">{appLabel(app.app)}</span>
+              <span class="app-track">
+                <span class="app-fill" style:transform="scaleX({app.seconds / detailAppMax})" style:background={detail.project.color}></span>
+              </span>
+              <span class="app-time">{formatDuration(app.seconds)}</span>
+            </div>
+          {/each}
+          {#if focusedApps.length === 0}
+            <div class="empty-sub">Nothing in a selected tool yet.</div>
+          {/if}
+        </div>
+        <div class="app-group">
+          <span><i class="focus-key off"></i> Other apps</span>
+          <span>{formatDuration(detail.unfocusedSeconds)}</span>
+        </div>
+        <div class="apps">
+          {#each otherApps.slice(0, 8) as app (app.app + (app.focused ?? "?"))}
+            <div class="app-row">
+              <span class="app-name"><i class="focus-key" class:neutral={app.focused == null}></i> {appLabel(app.app)}</span>
+              <span class="app-track">
+                <span class="app-fill other" style:transform="scaleX({app.seconds / detailAppMax})"></span>
+              </span>
+              <span class="app-time">{formatDuration(app.seconds)}</span>
+            </div>
+          {/each}
+          {#if otherApps.length === 0}
+            <div class="empty-sub">No other app time yet.</div>
+          {/if}
+        </div>
+      {:else}
+        <div class="apps">
+          {#each detail.perApp.slice(0, 8) as app (app.app)}
+            <div class="app-row">
+              <span class="app-name">{appLabel(app.app)}</span>
+              <span class="app-track">
+                <span class="app-fill" style:transform="scaleX({app.seconds / detailAppMax})" style:background={detail.project.color}></span>
+              </span>
+              <span class="app-time">{formatDuration(app.seconds)}</span>
+            </div>
+          {/each}
+          {#if detail.perApp.length === 0}
+            <div class="empty-sub">Nothing tracked yet.</div>
+          {/if}
+        </div>
+      {/if}
     </section>
 
     <section class="section">
@@ -747,6 +916,232 @@
 
   .detail-value.small {
     font-size: 16px;
+  }
+
+  .focus-section {
+    margin-top: 36px;
+  }
+
+  .focus-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .focus-number {
+    margin-top: 4px;
+    color: var(--green);
+    font-size: 48px;
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .focus-number span {
+    margin-left: 1px;
+    color: var(--muted);
+    font-size: 24px;
+    letter-spacing: -0.02em;
+  }
+
+  .focus-copy {
+    max-width: 300px;
+    padding-bottom: 3px;
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.5;
+    text-align: right;
+  }
+
+  .focus-bar {
+    display: flex;
+    height: 8px;
+    margin-top: 16px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--surface-3);
+  }
+
+  .focus-fill {
+    height: 100%;
+    background: var(--green);
+    transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .other-fill {
+    flex: 1;
+    height: 100%;
+    background: color-mix(in srgb, var(--danger) 65%, var(--surface-3));
+  }
+
+  .focus-legend {
+    display: flex;
+    gap: 18px;
+    margin-top: 9px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .focus-legend span,
+  .app-group > span:first-child {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .focus-key {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--muted-2);
+  }
+
+  .focus-key.on {
+    background: var(--green);
+  }
+
+  .focus-key.off {
+    background: var(--danger);
+  }
+
+  .focus-key.neutral {
+    background: var(--muted-2);
+  }
+
+  .section-note {
+    max-width: 580px;
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .chip-add-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+
+  .chip-add-button:hover {
+    border-color: var(--accent-line);
+    background: var(--accent-soft);
+    color: var(--accent-text);
+  }
+
+  .chip-add-button:disabled {
+    opacity: 0.5;
+  }
+
+  .tool-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 16px;
+  }
+
+  .tool-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 5px 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 12.5px;
+  }
+
+  .tool-name {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tool-x {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted-2);
+    opacity: 0.55;
+  }
+
+  .tool-chip:hover .tool-x,
+  .tool-x:focus-visible {
+    opacity: 1;
+  }
+
+  .tool-x:hover {
+    background: var(--surface-3);
+    color: var(--text);
+  }
+
+  .tool-empty {
+    color: var(--muted-2);
+    font-size: 12.5px;
+  }
+
+  .tool-suggest {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    color: var(--muted-2);
+    font-size: 11px;
+  }
+
+  .tool-suggest button {
+    height: 24px;
+    padding: 0 8px;
+    border: 1px dashed var(--border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 10.5px;
+  }
+
+  .tool-suggest button:hover {
+    border-color: var(--accent-line);
+    color: var(--accent-text);
+  }
+
+  .app-group {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .app-fill.other {
+    background: color-mix(in srgb, var(--danger) 62%, var(--surface-3));
+  }
+
+  .app-name {
+    display: flex;
+    align-items: center;
+    gap: 7px;
   }
 
   .apps {

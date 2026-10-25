@@ -28,9 +28,11 @@ const heroVisual = document.querySelector(".hero-visual");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const HERO_ORDER = ["dashboard", "projects", "reports"];
 const TAB_MS = 7000;
+const SETTLE_MS = 1500;
 let heroShot = "dashboard";
 let swapTimer;
 let rotateTimer;
+let settleTimer;
 let tabHeld = false;
 
 function showHeroShot(name) {
@@ -55,52 +57,74 @@ function showHeroShot(name) {
   }
 }
 
-function stopHeroRotate() {
-  clearInterval(rotateTimer);
-  rotateTimer = undefined;
+function setCounting(on) {
+  for (const tab of heroTabs) tab.classList.toggle("counting", on && tab.classList.contains("active"));
 }
 
-function scheduleHeroRotate() {
-  stopHeroRotate();
-  if (reducedMotion || tabHeld) return;
+function clearHeroCycle() {
+  clearInterval(rotateTimer);
+  clearTimeout(settleTimer);
+  rotateTimer = undefined;
+  settleTimer = undefined;
+  setCounting(false);
+}
+
+function beginHeroCycle() {
+  clearInterval(rotateTimer);
+  if (reducedMotion || tabHeld || document.hidden) return;
+  setCounting(true);
   rotateTimer = setInterval(() => {
     if (tabHeld || document.hidden) return;
     const index = HERO_ORDER.indexOf(heroShot);
     showHeroShot(HERO_ORDER[(index + 1) % HERO_ORDER.length]);
+    setCounting(true);
   }, TAB_MS);
+}
+
+// A quick click should not reset the preview timer. Wait for the tab to settle,
+// then start a full cycle.
+function armHeroCycle(delay = SETTLE_MS) {
+  clearHeroCycle();
+  if (reducedMotion || tabHeld) return;
+  settleTimer = setTimeout(() => {
+    settleTimer = undefined;
+    if (!tabHeld && !document.hidden) beginHeroCycle();
+  }, delay);
 }
 
 heroTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
-    showHeroShot(tab.dataset.shot);
-    scheduleHeroRotate();
+    const name = tab.dataset.shot;
+    if (!name || name === heroShot) return;
+    showHeroShot(name);
+    armHeroCycle();
   });
 });
 
 heroTabsWrap?.addEventListener("pointerenter", () => {
   tabHeld = true;
-  stopHeroRotate();
+  clearHeroCycle();
 });
 heroTabsWrap?.addEventListener("pointerleave", () => {
   tabHeld = false;
-  scheduleHeroRotate();
+  armHeroCycle();
 });
 heroTabsWrap?.addEventListener("focusin", () => {
   tabHeld = true;
-  stopHeroRotate();
+  clearHeroCycle();
 });
 heroTabsWrap?.addEventListener("focusout", () => {
   tabHeld = false;
-  scheduleHeroRotate();
+  armHeroCycle();
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) stopHeroRotate();
-  else scheduleHeroRotate();
+  if (document.hidden) clearHeroCycle();
+  else armHeroCycle();
 });
 
 showHeroShot("dashboard");
-scheduleHeroRotate();
+armHeroCycle(700);
 
 // Interactive mini timer preview.
 const miniDemo = document.getElementById("mini-demo");
@@ -108,6 +132,7 @@ const miniClock = document.getElementById("mini-clock");
 const miniPause = document.getElementById("mini-pause");
 const miniPin = document.getElementById("mini-pin");
 const miniState = document.getElementById("mini-state");
+const miniFocus = document.getElementById("mini-focus");
 let miniSeconds = 1 * 3600 + 42 * 60 + 18;
 let miniRunning = true;
 
@@ -151,6 +176,18 @@ miniPin?.addEventListener("click", () => {
   miniPin.setAttribute("aria-label", pinned ? "Pin demo timer" : "Unpin demo timer");
   miniDemo?.classList.toggle("pinned", !pinned);
   renderMiniState();
+});
+
+miniFocus?.addEventListener("click", () => {
+  const on = miniFocus.getAttribute("aria-pressed") === "true";
+  miniFocus.setAttribute("aria-pressed", String(!on));
+  miniFocus.classList.toggle("on", !on);
+  miniFocus.classList.toggle("off", on);
+  miniFocus.textContent = on ? "Off tool" : "On tool";
+  miniFocus.setAttribute(
+    "aria-label",
+    on ? "Mark demo app as a selected tool" : "Mark demo app as another app",
+  );
 });
 
 function applyTheme(theme, animate) {

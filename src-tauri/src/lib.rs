@@ -244,6 +244,7 @@ pub fn run() {
             commands::list_projects,
             commands::create_project,
             commands::update_project,
+            commands::set_project_tools,
             commands::delete_project,
             commands::select_project,
             commands::set_paused,

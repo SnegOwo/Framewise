@@ -36,6 +36,8 @@ export const api = {
     archived: boolean,
   ) => invoke<void>("update_project", { id, name, client, color, archived }),
   deleteProject: (id: number) => invoke<void>("delete_project", { id }),
+  setProjectTools: (projectId: number, apps: string[]) =>
+    invoke<void>("set_project_tools", { projectId, apps }),
   selectProject: (projectId: number | null) =>
     invoke<void>("select_project", { projectId }),
   setPaused: (paused: boolean) => invoke<void>("set_paused", { paused }),

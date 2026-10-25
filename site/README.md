@@ -30,8 +30,9 @@ the `/Framewise/` project path.
 - `assets/screens/` — dark and light screenshots from the current build.
 - `assets/fonts/` — Hanken Grotesk and JetBrains Mono, bundled locally.
 - There is no waitlist or form. The closing section is a static release note.
-- The hero preview tabs auto-advance until hovered or focused; the floating mini
-  timer is a live demo with working pause and pin controls.
+- The hero preview tabs auto-advance after a short settle; quick clicks do not reset
+  the timer. The floating mini timer is a live demo with working pause, pin and
+  focus-tool controls.
 - The gallery lightbox supports arrow keys and prev/next buttons.
 - The theme toggle uses the browser View Transitions API for the circular reveal
   from the top-right, with an instant fallback.

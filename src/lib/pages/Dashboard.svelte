@@ -213,6 +213,16 @@
             <div class="status-timer">
               <span class="timer">{formatHMS(liveSeconds)}</span>
               <span class="status-state"><span class="dot dot-live"></span>Tracking</span>
+              {#if $status?.currentAppFocused !== null && $status?.currentAppFocused !== undefined}
+                <span
+                  class="focus-pill"
+                  class:on={$status.currentAppFocused}
+                  class:off={!$status.currentAppFocused}
+                >
+                  <span class="focus-dot"></span>
+                  {$status.currentAppFocused ? "On tool" : "Off tool"}
+                </span>
+              {/if}
             </div>
           {:else}
             <div class="status-timer">
@@ -465,6 +475,39 @@
   .status-state .dot {
     width: 6px;
     height: 6px;
+  }
+
+  .focus-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 20px;
+    margin-top: 5px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .focus-pill.on {
+    border-color: color-mix(in srgb, var(--green) 35%, transparent);
+    background: color-mix(in srgb, var(--green) 10%, transparent);
+    color: var(--green);
+  }
+
+  .focus-pill.off {
+    border-color: color-mix(in srgb, var(--danger) 32%, transparent);
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  .focus-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: currentColor;
   }
 
   .status-empty-icon {

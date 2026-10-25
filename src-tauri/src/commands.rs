@@ -59,6 +59,14 @@ fn build_status(state: &AppState) -> Result<Status, String> {
     let locked = inner.locked;
     let render_active = inner.render.is_some();
     drop(inner);
+    let active_project_has_tools = !cfg.active_project_tools.is_empty();
+    let current_app_focused = snapshot.current_app.as_ref().and_then(|app| {
+        if active_project_has_tools && snapshot.current_project_id.is_some() {
+            Some(cfg.active_project_tools.contains(&app.to_lowercase()))
+        } else {
+            None
+        }
+    });
     Ok(Status {
         paused,
         locked,
@@ -77,6 +85,8 @@ fn build_status(state: &AppState) -> Result<Status, String> {
         week_by_project: totals.week_by_project,
         today_by_app: totals.today_by_app,
         render_active,
+        active_project_has_tools,
+        current_app_focused,
     })
 }
 
@@ -163,6 +173,21 @@ pub fn create_project(
     let _ = tray::refresh(&app);
     emit_state(&app);
     Ok(project)
+}
+
+#[tauri::command]
+pub fn set_project_tools(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    project_id: i64,
+    apps: Vec<String>,
+) -> Result<(), String> {
+    state.db.set_project_tools(project_id, &apps).map_err(e)?;
+    if state.db.active_project_id() == Some(project_id) {
+        state.tracker.cut_all(&state.db, Local::now().timestamp());
+    }
+    emit_state(&app);
+    Ok(())
 }
 
 #[tauri::command]
@@ -419,9 +444,30 @@ pub fn save_session(
         .iter()
         .any(|a| a.eq_ignore_ascii_case(app_name.trim()))
         || is_adobe_name(&app_name);
+    let focused = project_id
+        .and_then(|id| state.db.project_tools(id).ok())
+        .and_then(|tools| {
+            if tools.is_empty() {
+                None
+            } else {
+                Some(
+                    tools
+                        .iter()
+                        .any(|tool| tool.eq_ignore_ascii_case(app_name.trim())),
+                )
+            }
+        });
     state
         .db
-        .save_session(id, &app_name, project_id, started_at, ended_at, Some(adobe))
+        .save_session(
+            id,
+            &app_name,
+            project_id,
+            started_at,
+            ended_at,
+            Some(adobe),
+            focused,
+        )
         .map_err(e)?;
     emit_state(&app);
     Ok(())

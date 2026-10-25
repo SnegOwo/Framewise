@@ -26,6 +26,8 @@
   --accent: #7dd3fc;
   --accent-text: #7dd3fc;
   --accent-soft: rgba(125, 211, 252, 0.1);
+  --good: #4ade80;
+  --bad: #f87171;
   --primary-bg: #ededed;
   --primary-fg: #0a0a0a;
   --shadow: 0 34px 90px rgba(0, 0, 0, 0.6);
@@ -46,6 +48,8 @@ html.light {
   --accent: #0ea5e9;
   --accent-text: #0369a1;
   --accent-soft: rgba(14, 165, 233, 0.1);
+  --good: #15803d;
+  --bad: #cf222e;
   --primary-bg: #111111;
   --primary-fg: #fbfbfb;
   --shadow: 0 30px 80px rgba(0, 0, 0, 0.14);
@@ -506,6 +510,22 @@ html.light .icon-moon {
     color 150ms ease;
 }
 
+.hero-tabs button::before {
+  content: "";
+  position: absolute;
+  right: 10px;
+  bottom: 3px;
+  left: 10px;
+  height: 1.5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 38%, transparent);
+  opacity: 0;
+}
+
+.hero-tabs button.active::before {
+  opacity: 1;
+}
+
 .hero-tabs button::after {
   content: "";
   position: absolute;
@@ -520,14 +540,9 @@ html.light .icon-moon {
   transform-origin: left center;
 }
 
-.hero-tabs button.active::after {
-  opacity: 0.85;
+.hero-tabs button.counting::after {
+  opacity: 0.9;
   animation: tab-timer 7000ms linear forwards;
-}
-
-.hero-tabs:hover button.active::after,
-.hero-tabs:focus-within button.active::after {
-  animation-play-state: paused;
 }
 
 @keyframes tab-timer {
@@ -733,6 +748,42 @@ html.light .mini-live:hover {
   font-size: 10.5px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.mini-app {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-focus {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  margin-left: auto;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.mini-focus.on {
+  border-color: color-mix(in srgb, var(--good) 36%, transparent);
+  background: color-mix(in srgb, var(--good) 12%, transparent);
+  color: var(--good);
+}
+
+.mini-focus.off {
+  border-color: color-mix(in srgb, var(--bad) 34%, transparent);
+  background: color-mix(in srgb, var(--bad) 10%, transparent);
+  color: var(--bad);
 }
 
 .mini-live-dot {

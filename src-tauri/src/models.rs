@@ -118,6 +118,8 @@ pub struct Status {
     pub week_by_project: Vec<ProjectTotal>,
     pub today_by_app: Vec<AppTotal>,
     pub render_active: bool,
+    pub active_project_has_tools: bool,
+    pub current_app_focused: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -174,11 +176,22 @@ pub struct ProjectDetail {
     pub total_seconds: i64,
     pub today_seconds: i64,
     pub week_seconds: i64,
-    pub per_app: Vec<AppTotal>,
+    pub focused_seconds: i64,
+    pub unfocused_seconds: i64,
+    pub tools: Vec<String>,
+    pub per_app: Vec<ProjectAppTotal>,
     pub per_day: Vec<DayTotal>,
     pub first_activity: Option<i64>,
     pub last_activity: Option<i64>,
     pub session_count: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectAppTotal {
+    pub app: String,
+    pub seconds: i64,
+    pub focused: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -24,7 +24,7 @@
   type Action = {
     id: string;
     label: string;
-    group: "Projects" | "Actions" | "Go to" | "Export";
+    group: "Projects" | "Create" | "Actions" | "Go to" | "Export";
     icon: string;
     hint?: string;
     keywords?: string;
@@ -149,10 +149,46 @@
 
   let all = $derived<Action[]>([...projectActions, ...actions]);
 
+  let createAction = $derived.by<Action | null>(() => {
+    const name = query.trim();
+    if (!name) return null;
+    const q = name.toLowerCase();
+    if ($activeProjects.some((project) => project.name.toLowerCase() === q)) return null;
+    if (
+      $activeProjects.some(
+        (project) =>
+          project.name.toLowerCase().includes(q) ||
+          (project.client ?? "").toLowerCase().includes(q),
+      )
+    ) {
+      return null;
+    }
+    return {
+      id: "create-project",
+      label: `Create project “${name}”`,
+      group: "Create",
+      icon: "plus",
+      hint: "Enter",
+      keywords: name,
+      run: async () => {
+        try {
+          const project = await api.createProject(name, null, "#7dd3fc");
+          await loadBootstrap();
+          await switchProject(project.id);
+          toast("Project created.", "success");
+        } catch (error) {
+          toast(errMessage(error), "error");
+        }
+      },
+    };
+  });
+
   let filtered = $derived.by(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return all;
-    return all.filter((action) => fuzzy(`${action.label} ${action.keywords ?? ""}`, q));
+    const matches = q
+      ? all.filter((action) => fuzzy(`${action.label} ${action.keywords ?? ""}`, q))
+      : all;
+    return createAction ? [...matches, createAction] : matches;
   });
 
   let selected = $derived.by(() => {
