@@ -189,7 +189,8 @@
         !project.archived,
       );
       await refresh();
-      toast(project.archived ? "Project restored." : "Project archived.");
+      if (detailId === project.id) await refreshDetail(project.id);
+      toast(project.archived ? "Project reopened." : "Project finished.");
     } catch (cause) {
       toast(errMessage(cause), "error");
     }
@@ -326,6 +327,10 @@
       <div class="detail-name">
         {detail.project.name}{#if detail.project.client}<span class="detail-client">{" — "}{detail.project.client}</span>{/if}
       </div>
+      <button class="detail-finish" onclick={() => detail && toggleArchive(detail.project)}>
+        <Icon name={detail.project.archived ? "arrow-right" : "check"} size={13} />
+        {detail.project.archived ? "Reopen project" : "Mark as finished"}
+      </button>
     </header>
 
     <div class="detail-stats">
@@ -570,7 +575,7 @@
                   <Icon name="pencil" size={14} /> Rename
                 </button>
                 <button class="menu-item" onclick={() => toggleArchive(row.project)}>
-                  <Icon name="archive" size={14} /> Archive
+                  <Icon name="check" size={14} /> Finish project
                 </button>
                 <div class="menu-sep"></div>
                 <button class="menu-item danger" onclick={() => remove(row.project)}>
@@ -644,7 +649,7 @@
 
     {#if archivedList.length > 0}
       <section class="section-sm">
-        <div class="eyebrow archived-label">Archived</div>
+        <div class="eyebrow archived-label">Finished</div>
         <div class="project-list">
           {#each archivedList as project (project.id)}
             <div class="project-row archived">
@@ -654,10 +659,10 @@
                   <div class="row-title">{project.name}</div>
                   <div class="row-sub">{project.client ?? "No client"}</div>
                 </div>
-                <span class="row-value">Archived</span>
+                <span class="row-value">Finished</span>
               </button>
-              <button class="menu-button" onclick={() => toggleArchive(project)} aria-label="Restore">
-                <Icon name="upload" size={14} />
+              <button class="menu-button" onclick={() => toggleArchive(project)} aria-label="Reopen project">
+                <Icon name="arrow-right" size={14} />
               </button>
             </div>
           {/each}
@@ -923,6 +928,22 @@
     font-size: 24px;
     font-weight: 500;
     letter-spacing: -0.02em;
+  }
+
+  .detail-finish {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .detail-finish:hover {
+    color: var(--accent-text);
   }
 
   .detail-stats {

@@ -111,13 +111,13 @@ timeline, one heatmap, and reports you can export without an account.
 Framewise 1.0 is available for Windows 10/11 from
 [GitHub Releases](https://github.com/SnegOwo/Framewise/releases/latest):
 
-- **Installer** — `Framewise_1.0.4_x64-setup.exe`
-- **Portable** — `Framewise_1.0.4_x64_portable.zip`
+- **Installer** — `Framewise_1.0.5_x64-setup.exe`
+- **Portable** — `Framewise_1.0.5_x64_portable.zip`
 
 The portable zip contains:
 
 ```
-Framewise_1.0.4_x64_portable/
+Framewise_1.0.5_x64_portable/
 ├── framewise.exe
 ├── framewise.portable
 └── README.txt
@@ -197,8 +197,10 @@ Sound can be disabled in Settings.
 to see its friendly name, category, executable and, when it is running, the full path.
 That is how `mpvnet.exe` becomes `mpv.net` with a description.
 
-**Projects.** Name, client, color, archive, delete (confirm only for delete), active
-project, per-project stats. Choose **No project** in the project picker, dock or tray
+**Projects.** Name, client, color, finish, delete (confirm only for delete), active
+project, per-project stats. Finished projects stay in the database and move to the
+**Finished** section, so they cannot be selected and no longer take space in the active
+list; reopen one any time. Choose **No project** in the project picker, dock or tray
 to track generally without assigning time. Creating a project opens a tool picker with
 Montage, YouTube video, Motion graphics and Photo edit templates, plus the apps already
 saved in Framewise; you can skip it and add tools later. A project detail page has focus
