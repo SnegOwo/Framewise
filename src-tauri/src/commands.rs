@@ -169,6 +169,13 @@ pub fn list_projects(
 }
 
 #[tauri::command]
+pub async fn scan_adobe_apps() -> Result<Vec<DetectedApp>, String> {
+    tauri::async_runtime::spawn_blocking(crate::adobe_scan::scan)
+        .await
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
 pub fn list_known_apps(state: State<'_, AppState>) -> Result<Vec<AppTotal>, String> {
     state.db.known_apps().map_err(e)
 }

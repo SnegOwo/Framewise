@@ -1,3 +1,4 @@
+mod adobe_scan;
 mod commands;
 mod db;
 mod export;
@@ -243,6 +244,7 @@ pub fn run() {
             commands::get_status,
             commands::list_projects,
             commands::list_known_apps,
+            commands::scan_adobe_apps,
             commands::create_project,
             commands::update_project,
             commands::set_project_tools,

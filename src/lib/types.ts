@@ -24,6 +24,11 @@ export interface AppDetails {
   path: string | null;
 }
 
+export interface DetectedApp {
+  app: string;
+  path: string;
+}
+
 export interface DayTotal {
   day: string;
   seconds: number;

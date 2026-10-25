@@ -4,6 +4,7 @@ import type {
   AppSettingsUpdate,
   AppTotal,
   Bootstrap,
+  DetectedApp,
   Goal,
   HeatmapCell,
   Project,
@@ -28,6 +29,7 @@ export const api = {
   listProjects: (includeArchived = false) =>
     invoke<Project[]>("list_projects", { includeArchived }),
   knownApps: () => invoke<AppTotal[]>("list_known_apps"),
+  scanAdobeApps: () => invoke<DetectedApp[]>("scan_adobe_apps"),
   createProject: (name: string, client: string | null, color: string) =>
     invoke<Project>("create_project", { name, client, color }),
   updateProject: (

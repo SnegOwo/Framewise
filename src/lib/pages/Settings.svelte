@@ -29,6 +29,7 @@
 
   let ignoreApps = $derived($boot?.settings.ignoreApps ?? []);
   let adobeApps = $derived($boot?.settings.adobeApps ?? []);
+  let scanning = $state(false);
 
   async function saveSettings(update: Parameters<typeof api.updateSettings>[0]) {
     try {
@@ -93,6 +94,27 @@
       kind,
       list.filter((item) => item !== app),
     );
+  }
+
+  async function scanAdobeApps() {
+    if (scanning) return;
+    scanning = true;
+    try {
+      const found = await api.scanAdobeApps();
+      const names = [...new Set(found.map((item) => item.app))];
+      const known = new Set(adobeApps.map((app) => app.toLowerCase()));
+      const added = names.filter((name) => !known.has(name.toLowerCase()));
+      await replaceApps("adobe", [...adobeApps, ...added]);
+      toast(
+        found.length
+          ? `Found ${names.length} Adobe app${names.length === 1 ? "" : "s"}${added.length ? `, added ${added.length}` : ""}.`
+          : "No Adobe apps found. Use Add .exe instead.",
+      );
+    } catch (cause) {
+      toast(errMessage(cause), "error");
+    } finally {
+      scanning = false;
+    }
   }
 
   async function backup() {
@@ -306,6 +328,9 @@
           </button>
         </span>
       {/each}
+      <button class="chip-add-button" onclick={() => void scanAdobeApps()} disabled={scanning}>
+        {scanning ? "Scanning…" : "Scan PC"}
+      </button>
       <button class="chip-add-button" onclick={() => void pickApps("adobe")}>
         <Icon name="plus" size={13} /> Add .exe
       </button>
@@ -504,6 +529,10 @@
   .chip-add-button:hover {
     color: var(--text);
     border-color: var(--border-strong);
+  }
+
+  .chip-add-button:disabled {
+    opacity: 0.5;
   }
 
   .about {

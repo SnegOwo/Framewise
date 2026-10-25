@@ -82,6 +82,13 @@ pub struct AppDetails {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct DetectedApp {
+    pub app: String,
+    pub path: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub theme: String,
     pub idle_minutes: u32,

@@ -82,7 +82,8 @@ timeline, one heatmap, and reports you can export without an account.
 - **Portable and private.** One folder, no installer, no network requests, no remote
   fonts, no accounts, no telemetry.
 - **A guided first run.** Choose theme, whether goals count focus time only,
-  notifications and launch at login — or skip to the defaults.
+  notifications and launch at login. Scan for Adobe apps or pick their `.exe` files —
+  or skip everything to the defaults.
 - **A real theme switch.** Dark and light with a circular reveal from the top-right,
   animated sun/moon glyphs, and a reduced-motion fallback.
 
@@ -199,8 +200,9 @@ overlapping labels.
 inline, edit or delete on hover, or add a manual session from the dock.
 
 **Settings.** Autosaving rows, a stepper for idle timeout, segmented theme and date
-format controls, native `.exe` pickers for the Adobe and ignore lists, a sound toggle,
-and a switch for counting only focus time toward goals.
+format controls, native `.exe` pickers for the Adobe and ignore lists, a scan for
+installed Adobe apps, a sound toggle, and a switch for counting only focus time toward
+goals.
 
 **Theme.** Dark and light with a circular reveal from the top-right. Motion is
 transform/opacity only and respects `prefers-reduced-motion`.
@@ -231,7 +233,7 @@ Checks:
 npm run check          # svelte-check / TypeScript / a11y
 npm run build          # Vite production build
 npm run audit:offline  # fails on any remote asset or endpoint
-cargo test --lib       # 32 backend tests
+cargo test --lib       # 34 backend tests
 cargo check            # backend type check
 ```
 
@@ -269,7 +271,7 @@ src-tauri/
 
 ## Tests
 
-The backend keeps **32 unit tests** covering midnight splitting, multi-day intervals,
+The backend keeps **34 unit tests** covering midnight splitting, multi-day intervals,
 idle cutoff, sleep gap detection, Adobe attribution, focus tools, ignored apps, goal
 progress and streaks, report grouping, CSV escaping and reassignment.
 

@@ -132,7 +132,7 @@
           </div>
           <h3>First run</h3>
           <ol class="docs-list">
-            <li>Run <code>framewise.exe</code>. A short welcome setup asks how you want Framewise to work — theme, goal counting, notifications and launch at login. Use <strong>Skip — use defaults</strong> if you prefer.</li>
+            <li>Run <code>framewise.exe</code>. A short welcome setup asks how you want Framewise to work — theme, goal counting, notifications, launch at login and Adobe apps. Scan the PC or choose the Adobe <code>.exe</code> files manually. Use <strong>Skip — use defaults</strong> if you prefer.</li>
             <li>Framewise opens the dashboard and sits in the tray.</li>
             <li>Open the project chip in the hero and pick a project, or type a new name.</li>
             <li>When the project is created, choose its focus tools from a template or the apps already saved in Framewise. Skip if you want to decide later.</li>
@@ -296,12 +296,18 @@
                 <tr><td>Launch at login</td><td>Starts Framewise when you sign in. Off by default.</td></tr>
                 <tr><td>Theme</td><td>Dark, light or follow Windows.</td></tr>
                 <tr><td>Date format</td><td>English dates or the system format.</td></tr>
-                <tr><td>Adobe apps</td><td>Adobe executables that always credit the active project.</td></tr>
+                <tr><td>Adobe apps</td><td>Adobe executables that always credit the active project. Scan the PC or add <code>.exe</code> files manually.</td></tr>
                 <tr><td>Ignored apps</td><td>Executables that are never tracked.</td></tr>
                 <tr><td>Backup / import</td><td>Copy the SQLite database out or replace the current one.</td></tr>
               </tbody>
             </table>
           </div>
+          <p>
+            The Adobe scan checks Program Files, ProgramData, the Adobe folders in your
+            user profile, the Windows registry and every fixed drive. It finds multiple
+            installed versions and ignores helper executables, so only the main apps are
+            added.
+          </p>
         </section>
 
         <section id="keyboard">
