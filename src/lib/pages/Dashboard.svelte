@@ -436,6 +436,8 @@
 
 <style>
   .hero-block {
+    position: relative;
+    z-index: 2;
     padding-top: 56px;
   }
 
