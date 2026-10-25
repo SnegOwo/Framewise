@@ -1,0 +1,40 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# local tooling
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# env / secrets (there should never be any, Framewise is offline-only)
+.env
+.env.*
+!.env.example
+
+# local databases and exports used while testing
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*.db-shm
+*.db-wal
+exports/
+*.log
+
+# portable deliverable
+release/
+
+# marketing site and promo video (kept local)
+site/
+Assets/framewise-logo-animation.mp4
+
+# tauri local overrides
+src-tauri/tauri.local.conf.json
