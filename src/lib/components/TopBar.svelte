@@ -9,7 +9,7 @@
 
   let nav: HTMLElement | undefined = $state();
   let thumb = $state({ left: 0, width: 0, ready: false });
-  let spinning = $state(false);
+  let popping = $state(false);
 
   let theme = $derived(($boot?.settings.theme ?? "dark") as ThemeSetting);
   let isLight = $derived(theme === "light");
@@ -42,14 +42,14 @@
   async function toggleTheme() {
     const next: ThemeSetting = isLight ? "dark" : "light";
     applyTheme(next);
-    spinning = true;
+    popping = true;
     try {
       await api.updateSettings({ theme: next });
       await loadBootstrap();
     } catch (error) {
       toast(errMessage(error), "error");
     }
-    window.setTimeout(() => (spinning = false), 380);
+    window.setTimeout(() => (popping = false), 460);
   }
 </script>
 
@@ -82,12 +82,18 @@
 
     <button
       class="theme"
+      class:popping
       onclick={toggleTheme}
       title={isLight ? "Switch to dark" : "Switch to light"}
       aria-label={isLight ? "Switch to dark" : "Switch to light"}
     >
-      <span class="theme-icon" class:spin={spinning}>
-        <Icon name={isLight ? "moon" : "sun"} size={17} />
+      <span class="theme-icon" class:light={isLight}>
+        <span class="glyph sun">
+          <span class="ambient sun-ambient"><Icon name="sun" size={17} /></span>
+        </span>
+        <span class="glyph moon">
+          <span class="ambient moon-ambient"><Icon name="moon" size={17} /></span>
+        </span>
       </span>
     </button>
   </div>
@@ -193,12 +199,95 @@
   }
 
   .theme-icon {
-    display: flex;
-    transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    position: relative;
+    width: 18px;
+    height: 18px;
   }
 
-  .theme-icon.spin {
-    transform: rotate(180deg);
+  .glyph {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      opacity 260ms ease,
+      transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .glyph.sun {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+
+  .glyph.moon {
+    opacity: 0;
+    transform: rotate(-70deg) scale(0.5);
+  }
+
+  .theme-icon.light .glyph.sun {
+    opacity: 0;
+    transform: rotate(70deg) scale(0.5);
+  }
+
+  .theme-icon.light .glyph.moon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+
+  .ambient {
+    display: flex;
+  }
+
+  .sun-ambient {
+    animation: sun-turn 34s linear infinite;
+  }
+
+  .moon-ambient {
+    animation: moon-bob 5.5s ease-in-out infinite;
+  }
+
+  @keyframes sun-turn {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes moon-bob {
+    0%,
+    100% {
+      transform: rotate(-5deg) translateY(0);
+    }
+    50% {
+      transform: rotate(5deg) translateY(-1px);
+    }
+  }
+
+  .theme.popping .theme-icon {
+    animation: theme-pop 460ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes theme-pop {
+    0% {
+      transform: scale(1) rotate(0);
+    }
+    35% {
+      transform: scale(0.82) rotate(-10deg);
+    }
+    70% {
+      transform: scale(1.08) rotate(5deg);
+    }
+    100% {
+      transform: scale(1) rotate(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sun-ambient,
+    .moon-ambient,
+    .theme.popping .theme-icon {
+      animation: none;
+    }
   }
 
   @media (max-width: 640px) {

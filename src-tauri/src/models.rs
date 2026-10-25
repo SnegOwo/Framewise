@@ -90,6 +90,7 @@ pub struct Settings {
     pub count_media_encoder_background: bool,
     pub launch_at_login: bool,
     pub notify_goals: bool,
+    pub celebrate_sound: bool,
     pub ignore_apps: Vec<String>,
     pub adobe_apps: Vec<String>,
     pub data_path: String,
@@ -188,4 +189,5 @@ pub struct AppSettingsUpdate {
     pub count_media_encoder_background: Option<bool>,
     pub launch_at_login: Option<bool>,
     pub notify_goals: Option<bool>,
+    pub celebrate_sound: Option<bool>,
 }

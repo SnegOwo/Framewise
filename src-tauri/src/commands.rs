@@ -270,6 +270,12 @@ pub fn update_settings(
             .set_setting("notify_goals", if v { "true" } else { "false" })
             .map_err(e)?;
     }
+    if let Some(v) = update.celebrate_sound {
+        state
+            .db
+            .set_setting("celebrate_sound", if v { "true" } else { "false" })
+            .map_err(e)?;
+    }
     if let Some(v) = update.launch_at_login {
         if crate::portable::is_portable() {
             // Portable builds never touch the registry for autostart.
@@ -558,6 +564,12 @@ pub async fn open_mini_window(app: AppHandle) -> Result<(), String> {
     })
     .map_err(e)?;
     Ok(())
+}
+
+#[tauri::command]
+pub fn set_mini_pinned(state: State<'_, AppState>, pinned: bool) {
+    use std::sync::atomic::Ordering;
+    state.mini_pinned.store(pinned, Ordering::Relaxed);
 }
 
 #[tauri::command]

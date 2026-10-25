@@ -152,7 +152,8 @@ pub fn show_mini_window(
     .title("Framewise")
     .inner_size(360.0, 132.0)
     .min_inner_size(320.0, 120.0)
-    .resizable(false)
+    .max_inner_size(640.0, 420.0)
+    .resizable(true)
     .decorations(false)
     .always_on_top(true)
     .skip_taskbar(true);
@@ -229,9 +230,11 @@ pub fn run() {
                 }
             }
             if window.label() == "mini" {
-                // Tray popovers go away as soon as they lose focus.
                 if let tauri::WindowEvent::Focused(false) = event {
-                    let _ = window.close();
+                    let state = window.state::<AppState>();
+                    if !state.mini_pinned.load(Ordering::Relaxed) {
+                        let _ = window.close();
+                    }
                 }
             }
         })
@@ -265,6 +268,7 @@ pub fn run() {
             commands::open_full_app,
             commands::app_details,
             commands::open_mini_window,
+            commands::set_mini_pinned,
             commands::close_mini_window,
             commands::quit_app,
         ])

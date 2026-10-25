@@ -67,11 +67,16 @@
       if (done && !reachedGoals.has(goal.id)) {
         reachedGoals.add(goal.id);
         if (goalsReady) {
+          const tint =
+            goal.projectId != null
+              ? $boot.projects.find((project) => project.id === goal.projectId)?.color
+              : undefined;
           celebrate(
             goal.period === "daily" ? "Daily goal reached" : "Weekly goal reached",
             `${formatDuration(seconds)} of ${formatDuration(goal.targetSeconds)}${
               goal.projectName ? ` · ${goal.projectName}` : ""
             }`,
+            tint,
           );
         }
       } else if (!done) {

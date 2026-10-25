@@ -199,6 +199,22 @@
 
     <div class="setting-row">
       <div class="setting-text">
+        <div class="setting-name">Celebration sound</div>
+        <div class="setting-help">One soft chime when a goal is reached.</div>
+      </div>
+      <button
+        class="toggle"
+        class:on={$boot?.settings.celebrateSound}
+        onclick={() => void saveSettings({ celebrateSound: !$boot?.settings.celebrateSound })}
+        aria-pressed={$boot?.settings.celebrateSound}
+        aria-label="Celebration sound"
+      >
+        <span class="knob"></span>
+      </button>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-text">
         <div class="setting-name">Launch at login</div>
         <div class="setting-help">
           {#if portable}

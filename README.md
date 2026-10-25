@@ -1,12 +1,21 @@
 <p align="center">
-  <img src="Assets/FrameWiseLogoPNG.png" width="88" alt="Framewise logo" />
+  <img src="Assets/FrameWiseLogoPNG.png" width="92" alt="Framewise logo" />
 </p>
 
 <h1 align="center">Framewise</h1>
 
 <p align="center">
   <strong>A quiet, offline time tracker for Adobe creatives.</strong><br />
-  Coming soon for Windows 10/11 &nbsp;·&nbsp; Offline by design &nbsp;·&nbsp; MIT
+  Windows 10/11 &nbsp;·&nbsp; Portable by default &nbsp;·&nbsp; MIT
+</p>
+
+<p align="center">
+  <a href="#why-framewise">Why</a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#portable">Portable</a> ·
+  <a href="#privacy">Privacy</a> ·
+  <a href="#development">Development</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
 <p align="center">
@@ -17,19 +26,54 @@ Framewise follows the app in focus and credits Premiere, After Effects and Photo
 time to the project you are actually on. It lives in the tray, keeps every number on
 your machine, and stays out of the edit.
 
+> **Status:** 1.0 release candidate for Windows. Private build; no telemetry, no
+> accounts, no network requests.
+
+## Contents
+
+- [Why Framewise](#why-framewise)
+- [Highlights](#highlights)
+- [Screenshots](#screenshots)
+- [Portable build](#portable-build)
+- [Privacy](#privacy)
+- [How it works](#how-it-works)
+- [Keyboard](#keyboard)
+- [Development](#development)
+- [Architecture](#architecture)
+- [Tests](#tests)
+- [Contributing](#contributing)
+- [Security](#security)
+- [License](#license)
+
+## Why Framewise
+
+Most time trackers ask you to classify your work after the fact. Framewise starts
+from the app you are actually using. If Premiere is in focus, the time belongs to the
+project you picked. If you switch to a browser, that time is still recorded, but never
+silently assigned to client work.
+
+The result is a small, legible record of a creative day: one live sentence, one
+timeline, one heatmap, and reports you can export without an account.
+
+## Highlights
+
 - **Adobe-first attribution.** Adobe apps get the active project. Everything else is
   tracked for general stats without a project. No project selected means unassigned,
   never guessed.
-- **One live sentence.** Today's time, the current project and the goal you are
-  working toward, in one quiet header. No dashboard noise.
 - **A real 24-hour view.** App tracks, session pills and a now cursor, so the day is
   legible at a glance.
-- **Goals, heatmap, reports.** Daily and weekly rings, a year contribution map, six
-  report ranges, and CSV / JSON / Markdown export.
-- **Portable and private.** One folder, no installer, no network requests, no
-  accounts, no telemetry, no remote fonts.
-- **A tray that behaves.** Single click opens a mini timer near the tray; double
-  click opens the full app.
+- **Goals that feel finished.** Daily and weekly rings, a contribution heatmap, six
+  report ranges, CSV/JSON/Markdown export, and a quiet time-bloom reward when a goal
+  completes.
+- **Know what you are looking at.** Click any app name to see its friendly name,
+  category, executable and — when it is running — the full path.
+- **A tray that behaves.** Single click opens a mini timer near the tray; double click
+  opens the full app. The mini shows **Pin** — pin it to keep it open and drag it
+  anywhere. Unpinned, it behaves like a tray popover and closes when it loses focus.
+- **Portable and private.** One folder, no installer, no network requests, no remote
+  fonts, no accounts, no telemetry.
+- **A real theme switch.** Dark and light with a circular reveal from the top-right,
+  animated sun/moon glyphs, and a reduced-motion fallback.
 
 ## Screenshots
 
@@ -48,44 +92,9 @@ your machine, and stays out of the edit.
   <img src="docs/screenshots/mini-360x132-dark.png" width="36%" alt="Framewise mini timer near the tray" />
 </p>
 
-## The details
-
-**Tracking.** The foreground executable is sampled every 1.5 seconds and stored as
-local sessions. Sessions split at local midnight and at every app or project switch.
-
-**Pausing.** Idle, lock, sleep and hibernation stop the clock. Idle time is cut back
-to the last real input, so idle minutes are never billed. A sleep gap is never
-bridged with phantom time.
-
-**Goals.** A new install starts with **no goals** — no surprise 4-hour target. Create
-daily or weekly goals from the dashboard; the rings grow on first view only and the
-value can be edited inline. When a goal is reached, the ring completes with a check
-and a short accent burst; press `Alt+P` to preview it.
-
-**Inspect an app.** Click any app name or icon (dashboard status, sessions, timeline)
-to see its friendly name, the executable and, when it is running, the full path. That
-is how `mpvnet.exe` becomes `mpv.net` with a description.
-
-**Projects.** Name, client, color, archive, delete (confirm only for delete), active
-project, per-project stats. A project detail page has per-app bars, a 30-day chart
-and a six-month mini heatmap.
-
-**Reports.** This week, last week, this month, 30 days, this year, or a custom range.
-A single project filter and a single export menu. Goal line inside the chart, no
-overlapping labels.
-
-**Sessions.** Grouped by day with sticky headings. Reassign a session's project
-inline, edit or delete on hover, or add a manual session from the dock.
-
-**Settings.** Autosaving rows, a stepper for idle timeout, segmented theme and date
-format controls, and native `.exe` pickers for the Adobe and ignore lists.
-
-**Theme.** Dark and light, with a circular reveal from the top-right corner. Motion
-is transform/opacity only and respects `prefers-reduced-motion`.
-
 ## Portable build
 
-The deliverable is a folder, not an installer or an archive:
+The release candidate is a folder, not an installer or an archive:
 
 ```
 release/Framewise_1.0.0_x64_portable/
@@ -94,31 +103,74 @@ release/Framewise_1.0.0_x64_portable/
 └── README.txt
 ```
 
-Run `framewise.exe` from that folder. Everything stays beside it:
+Run `framewise.exe` from that folder. A `framewise.portable` marker switches the app
+into portable mode:
 
 ```
 data/framewise.sqlite3   sessions, projects and settings
 data/webview/            the WebView2 profile and cache
 ```
 
-Nothing is written to AppData or LocalAppData. Launch at login is disabled. Delete
-the folder to remove every trace. Settings → About reports whether the running build
+Nothing is written to AppData or LocalAppData. Launch at login is disabled. Delete the
+folder to remove every trace. **Settings → About** reports whether the running build
 is installed or portable, with the active data path.
 
-Build it with:
+**Mini timer:** a single tray click opens the mini near the tray. It is a popover by
+default and closes on focus loss. Click **Pin** to keep it open, then drag it anywhere
+from the timer body. The pin state is remembered.
+
+Build the folder with:
 
 ```bash
 npm run build:portable
 ```
 
-This produces the folder above. There is no zip.
-
-## Offline and privacy
+## Privacy
 
 Framewise makes no network requests. No telemetry, accounts, remote fonts or CDN
 assets. The content security policy allows only the app's own files and the Tauri IPC
-bridge. The database is a single SQLite file in WAL mode with a 15-second flush and a
+bridge. Your data is a single SQLite file in WAL mode with a 15-second flush and a
 checkpoint on quit.
+
+The app records **executable names**, not window titles. App inspection looks up the
+full path locally, on demand, and never sends it anywhere.
+
+## How it works
+
+**Attribution.** The foreground executable is sampled every 1.5 seconds. Ignored
+executables are never tracked. Adobe executables credit the active project; other apps
+are tracked without a project. No project means unassigned, never guessed.
+
+**Pausing.** Idle, lock, sleep and hibernation stop the clock. Idle time is cut back
+to the last real input, so idle minutes are never billed. A sleep gap is never
+bridged with phantom time.
+
+**Goals.** A new install starts with **no goals** — no surprise 4-hour target. Create
+daily or weekly goals from the dashboard; rings grow on first view only and the value
+can be edited inline. When a goal is reached, a time-bloom reward plays with an
+optional soft chime (`Alt+P` previews it). Sound can be disabled in Settings.
+
+**App inspection.** Click any app name or icon (dashboard status, sessions, timeline)
+to see its friendly name, category, executable and, when it is running, the full path.
+That is how `mpvnet.exe` becomes `mpv.net` with a description.
+
+**Projects.** Name, client, color, archive, delete (confirm only for delete), active
+project, per-project stats. A project detail page has per-app bars, a 30-day chart and
+a six-month mini heatmap.
+
+**Reports.** This week, last week, this month, 30 days, this year, or a custom range.
+A single project filter and a single export menu. Goal line inside the chart; no
+overlapping labels.
+
+**Sessions.** Grouped by day with sticky headings. Reassign a session's project
+inline, edit or delete on hover, or add a manual session from the dock.
+
+**Settings.** Autosaving rows, a stepper for idle timeout, segmented theme and date
+format controls, native `.exe` pickers for the Adobe and ignore lists, and a sound
+toggle.
+
+**Theme.** Dark and light with a circular reveal from the top-right. Motion is
+transform/opacity only and respects `prefers-reduced-motion`.
 
 ## Keyboard
 
@@ -152,11 +204,52 @@ cargo check            # backend type check
 
 Run the cargo commands from `src-tauri/`.
 
+## Architecture
+
+```
+src/
+  App.svelte                 shell, polling, shortcuts, event bridge
+  app.css                    design tokens, light/dark themes, components
+  lib/
+    api.ts                   typed Tauri command wrappers
+    stores.ts                bootstrap, status, toasts, app inspection
+    format.ts                local dates, durations, app names
+    router.ts                pages and cross-page filters
+    export.ts                CSV/JSON/Markdown export
+    theme.ts                 dark, light, circular reveal
+    celebration.ts           goal reward state
+    components/              dock, charts, heatmap, timeline, mini, reward
+    pages/                   Dashboard, Projects, Reports, Sessions, Settings
+src-tauri/
+  src/
+    lib.rs                   Tauri builder, windows, portable setup, state
+    portable.rs              portable marker, data folder, WebView2 profile
+    tracker.rs               polling engine and attribution rules
+    db.rs                    schema, sessions, reports, goals, backup/import
+    commands.rs              IPC commands
+    winapi.rs                foreground window, idle, lock, app paths, CPU
+    timeutil.rs              local day, midnight and week helpers
+    goals.rs                 goal progress and streaks
+    export.rs                report writers
+    tray.rs                  tray menu, mini toggle, project switching
+```
+
 ## Tests
 
-The backend keeps 26 unit tests covering midnight splitting, multi-day intervals,
+The backend keeps **26 unit tests** covering midnight splitting, multi-day intervals,
 idle cutoff, sleep gap detection, Adobe attribution, ignored apps, goal progress and
 streaks, report grouping, CSV escaping and reassignment.
+
+## Contributing
+
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+
+The short version: keep the app offline and local, never add telemetry or remote
+assets, keep the tracking behaviour covered by tests, and run the checks before a PR.
+
+## Security
+
+Please do not open a public issue for a security problem. See [SECURITY.md](SECURITY.md).
 
 ## License
 

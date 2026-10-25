@@ -115,6 +115,7 @@ export const api = {
   appDetails: (name: string) => invoke<AppDetails>("app_details", { name }),
   openFullApp: () => invoke<void>("open_full_app"),
   openMiniWindow: () => invoke<void>("open_mini_window"),
+  setMiniPinned: (pinned: boolean) => invoke<void>("set_mini_pinned", { pinned }),
   closeMiniWindow: () => invoke<void>("close_mini_window"),
   quit: () => invoke<void>("quit_app"),
 };

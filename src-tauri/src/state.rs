@@ -7,6 +7,7 @@ pub struct AppState {
     pub db: Db,
     pub tracker: Tracker,
     pub quitting: AtomicBool,
+    pub mini_pinned: AtomicBool,
 }
 
 impl AppState {
@@ -15,6 +16,7 @@ impl AppState {
             db,
             tracker: Tracker::new(),
             quitting: AtomicBool::new(false),
+            mini_pinned: AtomicBool::new(false),
         }
     }
 }

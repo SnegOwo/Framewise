@@ -2,6 +2,7 @@
   import { tick } from "svelte";
   import { fly } from "svelte/transition";
   import Icon from "./Icon.svelte";
+  import { reducedMotion } from "../motion";
   import SessionModal from "./SessionModal.svelte";
   import {
     activeProject,
@@ -36,7 +37,9 @@
   let selected = $state(0);
   let inputEl: HTMLInputElement | undefined = $state();
   let dockEl: HTMLDivElement | undefined = $state();
+  let resultsEl: HTMLDivElement | undefined = $state();
   let sessionOpen = $state(false);
+  let thumb = $state({ top: 0, height: 0, ready: false });
 
   let range = $derived(weekBounds(todayStr()));
   let isLight = $derived(($boot?.settings.theme ?? "dark") === "light");
@@ -175,6 +178,36 @@
   });
 
   $effect(() => {
+    open;
+    query;
+    filtered.length;
+    selected;
+    tick().then(measureThumb);
+  });
+
+  function measureThumb() {
+    if (!resultsEl) {
+      thumb = { top: 0, height: 0, ready: false };
+      return;
+    }
+    const buttons = resultsEl.querySelectorAll<HTMLButtonElement>(".result");
+    const button = buttons[selected];
+    if (!button) {
+      thumb = { top: 0, height: 0, ready: false };
+      return;
+    }
+    thumb = {
+      top: button.offsetTop,
+      height: button.offsetHeight,
+      ready: true,
+    };
+    button.scrollIntoView({
+      block: "nearest",
+      behavior: reducedMotion() ? "auto" : "smooth",
+    });
+  }
+
+  $effect(() => {
     if ($commandOpen) {
       open = true;
       tick().then(() => inputEl?.focus());
@@ -292,8 +325,17 @@
       class="results"
       role="listbox"
       aria-label="Commands"
+      bind:this={resultsEl}
       transition:fly={{ y: 8, duration: 220, opacity: 0.25 }}
     >
+      {#if thumb.ready}
+        <span
+          class="result-thumb"
+          style:top="{thumb.top}px"
+          style:height="{thumb.height}px"
+          aria-hidden="true"
+        ></span>
+      {/if}
       {#if filtered.length === 0}
         <div class="no-results">Nothing matches “{query}”</div>
       {:else}
@@ -418,6 +460,7 @@
   }
 
   .results {
+    position: relative;
     flex: 1;
     min-height: 0;
     overflow-y: auto;
@@ -426,7 +469,22 @@
     border-top: 1px solid var(--border-subtle);
   }
 
+  .result-thumb {
+    position: absolute;
+    right: 4px;
+    left: 4px;
+    z-index: 0;
+    border-radius: 9px;
+    background: var(--surface-3);
+    pointer-events: none;
+    transition:
+      top 240ms cubic-bezier(0.32, 0.72, 0, 1),
+      height 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
   .group {
+    position: relative;
+    z-index: 1;
     padding: 8px 9px 4px;
     color: var(--muted-2);
     font-size: 11px;
@@ -435,6 +493,8 @@
   }
 
   .result {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -462,7 +522,7 @@
   }
 
   .result.selected {
-    background: var(--surface-3);
+    color: var(--text);
   }
 
   .result :global(svg) {

@@ -564,6 +564,7 @@ fn seed(conn: &Connection) -> Result<()> {
             ("count_media_encoder_background", "false".to_string()),
             ("launch_at_login", "false".to_string()),
             ("notify_goals", "true".to_string()),
+            ("celebrate_sound", "true".to_string()),
             ("seeded", "1".to_string()),
         ] {
             set_setting(&tx, k, &v)?;
@@ -633,6 +634,7 @@ pub fn read_settings(conn: &Connection, data_path: &str, version: &str) -> Resul
         ),
         launch_at_login: setting_bool(conn, "launch_at_login", false),
         notify_goals: setting_bool(conn, "notify_goals", true),
+        celebrate_sound: setting_bool(conn, "celebrate_sound", true),
         ignore_apps: get_app_rules_conn(conn, "ignore"),
         adobe_apps: get_app_rules_conn(conn, "adobe"),
         data_path: data_path.to_string(),

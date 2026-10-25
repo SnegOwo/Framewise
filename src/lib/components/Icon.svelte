@@ -102,6 +102,9 @@
     <circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none" />
   {:else if name === "external"}
     <path d="M14 4h6v6M20 4l-9 9M18 14v5.5H4.5V6H10" />
+  {:else if name === "pin"}
+    <path d="M9 3.5h6l-1 5 3 3H7l3-3-1-5Z" />
+    <path d="M12 11.5v9" />
   {:else if name === "info"}
     <circle cx="12" cy="12" r="8.5" />
     <path d="M12 10.5V17M12 7.5h.01" />

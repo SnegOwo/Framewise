@@ -58,6 +58,7 @@ export interface Settings {
   countMediaEncoderBackground: boolean;
   launchAtLogin: boolean;
   notifyGoals: boolean;
+  celebrateSound: boolean;
   ignoreApps: string[];
   adobeApps: string[];
   dataPath: string;
@@ -154,6 +155,7 @@ export interface AppSettingsUpdate {
   countMediaEncoderBackground?: boolean;
   launchAtLogin?: boolean;
   notifyGoals?: boolean;
+  celebrateSound?: boolean;
 }
 
 export type ToastTone = "neutral" | "success" | "error";
