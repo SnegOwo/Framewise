@@ -77,7 +77,9 @@ There is no frontend test runner yet; keep components small and pure where possi
   (`Fix idle cutoff at midnight`).
 - Describe the user-facing result, not only the files touched.
 - Include before/after screenshots for UI work.
-- Do not commit generated output (`dist/`, `target/`, `release/`, `site/`).
+- Do not commit generated output (`dist/`, `target/`, `release/`).
+- The landing page lives in `site/` and deploys through GitHub Pages. Keep it static,
+  self-contained and free of remote fonts or assets.
 - Do not commit real user databases or exports.
 
 ## Reporting bugs

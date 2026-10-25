@@ -154,7 +154,11 @@ pub fn create_project(
 ) -> Result<Project, String> {
     let project = state
         .db
-        .create_project(&name, client.as_deref(), color.as_deref().unwrap_or("#7dd3fc"))
+        .create_project(
+            &name,
+            client.as_deref(),
+            color.as_deref().unwrap_or("#7dd3fc"),
+        )
         .map_err(e)?;
     let _ = tray::refresh(&app);
     emit_state(&app);
@@ -191,11 +195,7 @@ pub fn update_project(
 }
 
 #[tauri::command]
-pub fn delete_project(
-    app: AppHandle,
-    state: State<'_, AppState>,
-    id: i64,
-) -> Result<(), String> {
+pub fn delete_project(app: AppHandle, state: State<'_, AppState>, id: i64) -> Result<(), String> {
     state.tracker.cut_all(&state.db, Local::now().timestamp());
     state.db.delete_project(id).map_err(e)?;
     let _ = tray::refresh(&app);
@@ -217,11 +217,7 @@ pub fn select_project(
 }
 
 #[tauri::command]
-pub fn set_paused(
-    app: AppHandle,
-    state: State<'_, AppState>,
-    paused: bool,
-) -> Result<(), String> {
+pub fn set_paused(app: AppHandle, state: State<'_, AppState>, paused: bool) -> Result<(), String> {
     state
         .db
         .set_setting("paused", if paused { "true" } else { "false" })
@@ -261,7 +257,10 @@ pub fn update_settings(
     if let Some(v) = update.count_media_encoder_background {
         state
             .db
-            .set_setting("count_media_encoder_background", if v { "true" } else { "false" })
+            .set_setting(
+                "count_media_encoder_background",
+                if v { "true" } else { "false" },
+            )
             .map_err(e)?;
     }
     if let Some(v) = update.notify_goals {
@@ -352,11 +351,7 @@ pub fn update_goal(
 }
 
 #[tauri::command]
-pub fn delete_goal(
-    app: AppHandle,
-    state: State<'_, AppState>,
-    id: i64,
-) -> Result<(), String> {
+pub fn delete_goal(app: AppHandle, state: State<'_, AppState>, id: i64) -> Result<(), String> {
     state.db.delete_goal(id).map_err(e)?;
     emit_state(&app);
     Ok(())
@@ -372,7 +367,12 @@ pub fn get_report(
 ) -> Result<Report, String> {
     state
         .db
-        .report(&start_day, &end_day, project_id, unassigned.unwrap_or(false))
+        .report(
+            &start_day,
+            &end_day,
+            project_id,
+            unassigned.unwrap_or(false),
+        )
         .map_err(e)
 }
 
@@ -386,7 +386,12 @@ pub fn get_heatmap(
 ) -> Result<Vec<HeatmapCell>, String> {
     state
         .db
-        .heatmap(&start_day, &end_day, project_id, unassigned.unwrap_or(false))
+        .heatmap(
+            &start_day,
+            &end_day,
+            project_id,
+            unassigned.unwrap_or(false),
+        )
         .map_err(e)
 }
 
@@ -423,11 +428,7 @@ pub fn save_session(
 }
 
 #[tauri::command]
-pub fn delete_session(
-    app: AppHandle,
-    state: State<'_, AppState>,
-    id: i64,
-) -> Result<(), String> {
+pub fn delete_session(app: AppHandle, state: State<'_, AppState>, id: i64) -> Result<(), String> {
     state.db.delete_session(id).map_err(e)?;
     emit_state(&app);
     Ok(())
@@ -440,23 +441,14 @@ pub fn reassign_sessions(
     ids: Vec<i64>,
     project_id: Option<i64>,
 ) -> Result<(), String> {
-    state
-        .db
-        .reassign_sessions(&ids, project_id)
-        .map_err(e)?;
+    state.db.reassign_sessions(&ids, project_id).map_err(e)?;
     emit_state(&app);
     Ok(())
 }
 
 #[tauri::command]
-pub fn get_project_detail(
-    state: State<'_, AppState>,
-    id: i64,
-) -> Result<ProjectDetail, String> {
-    state
-        .db
-        .project_detail(id, &today_str())
-        .map_err(e)
+pub fn get_project_detail(state: State<'_, AppState>, id: i64) -> Result<ProjectDetail, String> {
+    state.db.project_detail(id, &today_str()).map_err(e)
 }
 
 #[tauri::command]
@@ -471,7 +463,12 @@ pub fn export_data(
 ) -> Result<String, String> {
     let report = state
         .db
-        .report(&start_day, &end_day, project_id, unassigned.unwrap_or(false))
+        .report(
+            &start_day,
+            &end_day,
+            project_id,
+            unassigned.unwrap_or(false),
+        )
         .map_err(e)?;
     let sessions = state
         .db
@@ -489,10 +486,7 @@ pub fn export_data(
 }
 
 #[tauri::command]
-pub fn backup_database(
-    state: State<'_, AppState>,
-    path: String,
-) -> Result<String, String> {
+pub fn backup_database(state: State<'_, AppState>, path: String) -> Result<String, String> {
     let dest = PathBuf::from(path);
     state.db.backup_to(&dest).map_err(e)?;
     Ok(dest.to_string_lossy().to_string())

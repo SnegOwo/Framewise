@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="https://snegowo.github.io/Framewise/">Website</a> ·
   <a href="#why-framewise">Why</a> ·
   <a href="#screenshots">Screenshots</a> ·
   <a href="#portable">Portable</a> ·
@@ -26,8 +27,8 @@ Framewise follows the app in focus and credits Premiere, After Effects and Photo
 time to the project you are actually on. It lives in the tray, keeps every number on
 your machine, and stays out of the edit.
 
-> **Status:** 1.0 release candidate for Windows. Private build; no telemetry, no
-> accounts, no network requests.
+> **Status:** 1.0 release candidate for Windows, in final testing. Open source under
+> MIT. No telemetry, no accounts, no network requests.
 
 ## Contents
 
@@ -35,6 +36,7 @@ your machine, and stays out of the edit.
 - [Highlights](#highlights)
 - [Screenshots](#screenshots)
 - [Portable build](#portable-build)
+- [Website](#website)
 - [Privacy](#privacy)
 - [How it works](#how-it-works)
 - [Keyboard](#keyboard)
@@ -95,7 +97,9 @@ timeline, one heatmap, and reports you can export without an account.
 
 ## Portable build
 
-The release candidate is a folder, not an installer or an archive:
+1.0 is in release-candidate testing. No installer or public archive is published yet;
+build the portable folder from source with `npm run build:portable`. The result is a
+folder, not an installer or an archive:
 
 ```
 release/Framewise_1.0.0_x64_portable/
@@ -126,6 +130,12 @@ Build the folder with:
 ```bash
 npm run build:portable
 ```
+
+## Website
+
+The landing page is at <https://snegowo.github.io/Framewise/>. Its source is in
+[`site/`](site/) and deploys from `main` through GitHub Pages, with no build step and
+no external assets.
 
 ## Privacy
 

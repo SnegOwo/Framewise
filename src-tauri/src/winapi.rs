@@ -15,9 +15,7 @@ use windows::Win32::System::Threading::{
     PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO};
-use windows::Win32::UI::WindowsAndMessaging::{
-    GetForegroundWindow, GetWindowThreadProcessId,
-};
+use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
 
 pub fn foreground_process_name() -> Option<String> {
     unsafe {
@@ -111,11 +109,7 @@ pub fn idle_milliseconds() -> u64 {
 /// The secure/lock desktop cannot be opened while the session is locked.
 pub fn is_session_locked() -> bool {
     unsafe {
-        match OpenInputDesktop(
-            DESKTOP_CONTROL_FLAGS(0),
-            false,
-            DESKTOP_READOBJECTS,
-        ) {
+        match OpenInputDesktop(DESKTOP_CONTROL_FLAGS(0), false, DESKTOP_READOBJECTS) {
             Ok(desktop) => {
                 let _ = CloseDesktop(desktop);
                 false

@@ -32,9 +32,11 @@ exports/
 # portable deliverable
 release/
 
-# marketing site and promo video (kept local)
-site/
+# local promo sources and brand notes (not part of the public site)
 Assets/BetterFramWise-Logo-Animation.mp4
+Assets/dev/
+brand.html
+brand.md
 
 # tauri local overrides
 src-tauri/tauri.local.conf.json

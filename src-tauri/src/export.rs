@@ -53,9 +53,8 @@ pub fn escape_csv(value: &str) -> String {
 }
 
 fn to_csv(sessions: &[Session]) -> String {
-    let mut out = String::from(
-        "date,start,end,duration_seconds,duration,app,project,source,adobe\n",
-    );
+    let mut out =
+        String::from("date,start,end,duration_seconds,duration,app,project,source,adobe\n");
     for s in sessions {
         let duration = (s.ended_at - s.started_at).max(0);
         out.push_str(&format!(
@@ -86,7 +85,10 @@ fn to_markdown(report: &Report) -> String {
         "**{} to {}**  \nGenerated locally by Framewise. No data left this machine.\n\n",
         report.start_day, report.end_day
     ));
-    out.push_str(&format!("## Summary\n\n- Total: **{}**\n", duration_label(report.total_seconds)));
+    out.push_str(&format!(
+        "## Summary\n\n- Total: **{}**\n",
+        duration_label(report.total_seconds)
+    ));
     if let Some(best) = &report.best_day {
         out.push_str(&format!(
             "- Best day: **{}** ({})\n",
@@ -149,11 +151,7 @@ fn to_markdown(report: &Report) -> String {
     if !report.per_day.is_empty() {
         out.push_str("## Days\n\n| Day | Time |\n|---|---:|\n");
         for d in &report.per_day {
-            out.push_str(&format!(
-                "| {} | {} |\n",
-                d.day,
-                duration_label(d.seconds)
-            ));
+            out.push_str(&format!("| {} | {} |\n", d.day, duration_label(d.seconds)));
         }
         out.push('\n');
     }

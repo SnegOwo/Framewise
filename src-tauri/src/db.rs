@@ -112,14 +112,21 @@ impl Db {
         let conn = self.lock();
         let active_project_id = setting_i64(&conn, "active_project_id");
         let active_project_name = active_project_id.and_then(|id| {
-            conn.query_row("SELECT name FROM projects WHERE id = ?1", params![id], |r| r.get(0))
-                .optional()
-                .ok()
-                .flatten()
+            conn.query_row(
+                "SELECT name FROM projects WHERE id = ?1",
+                params![id],
+                |r| r.get(0),
+            )
+            .optional()
+            .ok()
+            .flatten()
         });
         Ok(RuntimeConfig {
             paused: setting_bool(&conn, "paused", false),
-            idle_seconds: setting_i64(&conn, "idle_minutes").unwrap_or(3).clamp(1, 180) * 60,
+            idle_seconds: setting_i64(&conn, "idle_minutes")
+                .unwrap_or(3)
+                .clamp(1, 180)
+                * 60,
             active_project_id,
             active_project_name,
             count_media_encoder_background: setting_bool(
@@ -143,12 +150,7 @@ impl Db {
         list_projects(&self.lock(), include_archived)
     }
 
-    pub fn create_project(
-        &self,
-        name: &str,
-        client: Option<&str>,
-        color: &str,
-    ) -> Result<Project> {
+    pub fn create_project(&self, name: &str, client: Option<&str>, color: &str) -> Result<Project> {
         create_project(&self.lock(), name, client, color)
     }
 
@@ -212,12 +214,7 @@ impl Db {
         create_goal(&self.lock(), scope, project_id, period, target_seconds)
     }
 
-    pub fn update_goal(
-        &self,
-        id: i64,
-        project_id: Option<i64>,
-        target_seconds: i64,
-    ) -> Result<()> {
+    pub fn update_goal(&self, id: i64, project_id: Option<i64>, target_seconds: i64) -> Result<()> {
         update_goal(&self.lock(), id, project_id, target_seconds)
     }
 
@@ -249,15 +246,7 @@ impl Db {
             tx.execute("DELETE FROM sessions WHERE id = ?1", params![id])?;
         }
         let adobe = adobe_override.unwrap_or_else(|| is_adobe_name(app));
-        insert_interval(
-            &tx,
-            app,
-            project_id,
-            started_at,
-            ended_at,
-            adobe,
-            "manual",
-        )?;
+        insert_interval(&tx, app, project_id, started_at, ended_at, adobe, "manual")?;
         tx.commit()?;
         Ok(())
     }
@@ -276,7 +265,9 @@ impl Db {
         let tx = conn.transaction()?;
         if let Some(pid) = project_id {
             let ok: Option<i64> = tx
-                .query_row("SELECT id FROM projects WHERE id = ?1", params![pid], |r| r.get(0))
+                .query_row("SELECT id FROM projects WHERE id = ?1", params![pid], |r| {
+                    r.get(0)
+                })
                 .optional()?;
             if ok.is_none() {
                 return Err(anyhow!("project not found"));
@@ -327,12 +318,15 @@ impl Db {
                AND (?4 = 0 OR project_id IS NULL)
              GROUP BY day ORDER BY day",
         )?;
-        let rows = stmt.query_map(params![start_day, end_day, project_id, unassigned as i64], |r| {
-            Ok(HeatmapCell {
-                day: r.get(0)?,
-                seconds: r.get(1)?,
-            })
-        })?;
+        let rows = stmt.query_map(
+            params![start_day, end_day, project_id, unassigned as i64],
+            |r| {
+                Ok(HeatmapCell {
+                    day: r.get(0)?,
+                    seconds: r.get(1)?,
+                })
+            },
+        )?;
         Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
     }
 
@@ -593,9 +587,11 @@ fn cleanup(conn: &Connection) -> Result<()> {
 }
 
 pub fn get_setting(conn: &Connection, key: &str) -> Option<String> {
-    conn.query_row("SELECT value FROM settings WHERE key = ?1", params![key], |r| {
-        r.get::<_, String>(0)
-    })
+    conn.query_row(
+        "SELECT value FROM settings WHERE key = ?1",
+        params![key],
+        |r| r.get::<_, String>(0),
+    )
     .optional()
     .ok()
     .flatten()
@@ -627,11 +623,7 @@ pub fn read_settings(conn: &Connection, data_path: &str, version: &str) -> Resul
         idle_minutes: setting_i64(conn, "idle_minutes").unwrap_or(3).clamp(1, 180) as u32,
         paused: setting_bool(conn, "paused", false),
         active_project_id,
-        count_media_encoder_background: setting_bool(
-            conn,
-            "count_media_encoder_background",
-            false,
-        ),
+        count_media_encoder_background: setting_bool(conn, "count_media_encoder_background", false),
         launch_at_login: setting_bool(conn, "launch_at_login", false),
         notify_goals: setting_bool(conn, "notify_goals", true),
         celebrate_sound: setting_bool(conn, "celebrate_sound", true),
@@ -644,10 +636,11 @@ pub fn read_settings(conn: &Connection, data_path: &str, version: &str) -> Resul
 }
 
 pub fn get_app_rules_conn(conn: &Connection, kind: &str) -> Vec<String> {
-    let mut stmt = match conn.prepare("SELECT app FROM app_rules WHERE kind = ?1 ORDER BY lower(app)") {
-        Ok(s) => s,
-        Err(_) => return Vec::new(),
-    };
+    let mut stmt =
+        match conn.prepare("SELECT app FROM app_rules WHERE kind = ?1 ORDER BY lower(app)") {
+            Ok(s) => s,
+            Err(_) => return Vec::new(),
+        };
     let rows = stmt.query_map(params![kind], |r| r.get::<_, String>(0));
     match rows {
         Ok(rows) => rows.filter_map(|r| r.ok()).collect(),
@@ -684,9 +677,7 @@ pub fn replace_app_rules(conn: &Connection, kind: &str, apps: &[String]) -> Resu
 }
 
 pub fn is_adobe_name(app: &str) -> bool {
-    DEFAULT_ADOBE
-        .iter()
-        .any(|a| a.eq_ignore_ascii_case(app))
+    DEFAULT_ADOBE.iter().any(|a| a.eq_ignore_ascii_case(app))
 }
 
 pub fn list_projects(conn: &Connection, include_archived: bool) -> Result<Vec<Project>> {
@@ -740,7 +731,12 @@ pub fn create_project(
     let now = Local::now().timestamp();
     conn.execute(
         "INSERT INTO projects(name, client, color, archived, created_at) VALUES(?1, ?2, ?3, 0, ?4)",
-        params![name, client.map(str::trim).filter(|s| !s.is_empty()), color, now],
+        params![
+            name,
+            client.map(str::trim).filter(|s| !s.is_empty()),
+            color,
+            now
+        ],
     )?;
     let id = conn.last_insert_rowid();
     get_project(conn, id)
@@ -843,7 +839,10 @@ pub fn close_session(conn: &Connection, id: i64, end: i64) -> Result<()> {
         "UPDATE sessions SET ended_at = ?1 WHERE id = ?2",
         params![end, id],
     )?;
-    conn.execute("DELETE FROM sessions WHERE id = ?1 AND ended_at <= started_at", params![id])?;
+    conn.execute(
+        "DELETE FROM sessions WHERE id = ?1 AND ended_at <= started_at",
+        params![id],
+    )?;
     Ok(())
 }
 
@@ -1033,8 +1032,12 @@ pub fn status_totals(
         ];
         params_week.extend(ids.iter().map(|id| (*id).into()));
         (
-            conn.query_row(&sql_today, rusqlite::params_from_iter(params_today), |r| r.get(0))?,
-            conn.query_row(&sql_week, rusqlite::params_from_iter(params_week), |r| r.get(0))?,
+            conn.query_row(&sql_today, rusqlite::params_from_iter(params_today), |r| {
+                r.get(0)
+            })?,
+            conn.query_row(&sql_week, rusqlite::params_from_iter(params_week), |r| {
+                r.get(0)
+            })?,
         )
     };
     out.today_seconds = today_total;
@@ -1127,7 +1130,9 @@ pub fn status_totals(
         let in_week = day.as_str() >= week_start && day.as_str() <= week_end;
         if in_today {
             out.today_seconds += secs;
-            let entry = today_apps.entry(live.app.clone()).or_insert((0, live.adobe));
+            let entry = today_apps
+                .entry(live.app.clone())
+                .or_insert((0, live.adobe));
             entry.0 += secs;
             *today_projects.entry(live.project_id).or_insert(0) += secs;
         }
@@ -1145,9 +1150,14 @@ pub fn status_totals(
     out.today_by_app = today_apps
         .into_iter()
         .filter(|(_, (s, _))| *s > 0)
-        .map(|(app, (seconds, adobe))| AppTotal { app, seconds, adobe })
+        .map(|(app, (seconds, adobe))| AppTotal {
+            app,
+            seconds,
+            adobe,
+        })
         .collect();
-    out.today_by_app.sort_by(|a, b| b.seconds.cmp(&a.seconds));
+    out.today_by_app
+        .sort_by_key(|item| std::cmp::Reverse(item.seconds));
     out.today_by_project = today_projects
         .into_iter()
         .filter(|(_, s)| *s > 0)
@@ -1159,7 +1169,8 @@ pub fn status_totals(
             seconds,
         })
         .collect();
-    out.today_by_project.sort_by(|a, b| b.seconds.cmp(&a.seconds));
+    out.today_by_project
+        .sort_by_key(|item| std::cmp::Reverse(item.seconds));
     out.week_by_project = week_projects
         .into_iter()
         .filter(|(_, s)| *s > 0)
@@ -1171,7 +1182,8 @@ pub fn status_totals(
             seconds,
         })
         .collect();
-    out.week_by_project.sort_by(|a, b| b.seconds.cmp(&a.seconds));
+    out.week_by_project
+        .sort_by_key(|item| std::cmp::Reverse(item.seconds));
     Ok(out)
 }
 
@@ -1251,7 +1263,11 @@ pub fn create_goal(
     if target_seconds <= 0 {
         return Err(anyhow!("goal must be greater than zero"));
     }
-    let scope = if scope == "project" { "project" } else { "global" };
+    let scope = if scope == "project" {
+        "project"
+    } else {
+        "global"
+    };
     if scope == "project" && project_id.is_none() {
         return Err(anyhow!("project goal requires a project"));
     }
@@ -1260,7 +1276,9 @@ pub fn create_goal(
     }
     if let Some(pid) = project_id {
         let exists: Option<i64> = conn
-            .query_row("SELECT id FROM projects WHERE id = ?1", params![pid], |r| r.get(0))
+            .query_row("SELECT id FROM projects WHERE id = ?1", params![pid], |r| {
+                r.get(0)
+            })
             .optional()?;
         if exists.is_none() {
             return Err(anyhow!("project not found"));
@@ -1313,7 +1331,11 @@ pub fn progress_for_goals(
     let mut out = Vec::new();
     for goal in goals {
         let (start, end, key) = if goal.period == "weekly" {
-            (week_start.clone(), week_end.clone(), format!("W{week_start}"))
+            (
+                week_start.clone(),
+                week_end.clone(),
+                format!("W{week_start}"),
+            )
         } else {
             (today.to_string(), today.to_string(), today.to_string())
         };
@@ -1333,11 +1355,7 @@ pub fn progress_for_goals(
     Ok(out)
 }
 
-pub fn goal_reached_once(
-    conn: &Connection,
-    goal_id: i64,
-    period_key: &str,
-) -> Result<bool> {
+pub fn goal_reached_once(conn: &Connection, goal_id: i64, period_key: &str) -> Result<bool> {
     let exists: Option<i64> = conn
         .query_row(
             "SELECT 1 FROM goal_notifications WHERE goal_id = ?1 AND period_key = ?2",
@@ -1369,7 +1387,11 @@ mod tests {
     fn ts(day: &str, hh: u32, mm: u32) -> i64 {
         let date = crate::timeutil::parse_day(day).unwrap();
         let naive = date.and_hms_opt(hh, mm, 0).unwrap();
-        naive.and_local_timezone(Local).single().unwrap().timestamp()
+        naive
+            .and_local_timezone(Local)
+            .single()
+            .unwrap()
+            .timestamp()
     }
 
     fn project(conn: &Connection, name: &str) -> i64 {
@@ -1382,10 +1404,46 @@ mod tests {
     fn report_groups_apps_projects_and_days() {
         let conn = test_db();
         let p = project(&conn, "YouTube Client 2");
-        insert_interval(&conn, "Adobe Premiere Pro.exe", Some(p), ts("2026-10-20", 9, 0), ts("2026-10-20", 10, 0), true, "auto").unwrap();
-        insert_interval(&conn, "Adobe After Effects.exe", Some(p), ts("2026-10-20", 10, 0), ts("2026-10-20", 11, 0), true, "auto").unwrap();
-        insert_interval(&conn, "chrome.exe", None, ts("2026-10-20", 11, 0), ts("2026-10-20", 11, 30), false, "auto").unwrap();
-        insert_interval(&conn, "Adobe Photoshop.exe", Some(p), ts("2026-10-21", 14, 0), ts("2026-10-21", 15, 0), true, "auto").unwrap();
+        insert_interval(
+            &conn,
+            "Adobe Premiere Pro.exe",
+            Some(p),
+            ts("2026-10-20", 9, 0),
+            ts("2026-10-20", 10, 0),
+            true,
+            "auto",
+        )
+        .unwrap();
+        insert_interval(
+            &conn,
+            "Adobe After Effects.exe",
+            Some(p),
+            ts("2026-10-20", 10, 0),
+            ts("2026-10-20", 11, 0),
+            true,
+            "auto",
+        )
+        .unwrap();
+        insert_interval(
+            &conn,
+            "chrome.exe",
+            None,
+            ts("2026-10-20", 11, 0),
+            ts("2026-10-20", 11, 30),
+            false,
+            "auto",
+        )
+        .unwrap();
+        insert_interval(
+            &conn,
+            "Adobe Photoshop.exe",
+            Some(p),
+            ts("2026-10-21", 14, 0),
+            ts("2026-10-21", 15, 0),
+            true,
+            "auto",
+        )
+        .unwrap();
 
         let report = report_for_range(&conn, "2026-10-20", "2026-10-21", None, false).unwrap();
         assert_eq!(report.total_seconds, 3 * 3600 + 1800);
@@ -1428,15 +1486,32 @@ mod tests {
         let conn = test_db();
         let a = project(&conn, "A");
         let b = project(&conn, "B");
-        insert_interval(&conn, "Photoshop.exe", Some(a), ts("2026-10-20", 9, 0), ts("2026-10-20", 10, 0), true, "auto").unwrap();
-        let id: i64 = conn.query_row("SELECT id FROM sessions LIMIT 1", [], |r| r.get(0)).unwrap();
+        insert_interval(
+            &conn,
+            "Photoshop.exe",
+            Some(a),
+            ts("2026-10-20", 9, 0),
+            ts("2026-10-20", 10, 0),
+            true,
+            "auto",
+        )
+        .unwrap();
+        let id: i64 = conn
+            .query_row("SELECT id FROM sessions LIMIT 1", [], |r| r.get(0))
+            .unwrap();
         conn.execute(
             "UPDATE sessions SET project_id = ?1 WHERE id = ?2",
             params![b, id],
         )
         .unwrap();
-        assert_eq!(sum_range(&conn, "2026-10-20", "2026-10-20", Some(a), false).unwrap(), 0);
-        assert_eq!(sum_range(&conn, "2026-10-20", "2026-10-20", Some(b), false).unwrap(), 3600);
+        assert_eq!(
+            sum_range(&conn, "2026-10-20", "2026-10-20", Some(a), false).unwrap(),
+            0
+        );
+        assert_eq!(
+            sum_range(&conn, "2026-10-20", "2026-10-20", Some(b), false).unwrap(),
+            3600
+        );
     }
 
     #[test]
@@ -1463,8 +1538,26 @@ mod tests {
                 created_at: 0,
             },
         ];
-        insert_interval(&conn, "Photoshop.exe", Some(p), ts("2026-10-19", 9, 0), ts("2026-10-19", 13, 0), true, "auto").unwrap();
-        insert_interval(&conn, "Photoshop.exe", Some(p), ts("2026-10-23", 9, 0), ts("2026-10-23", 12, 0), true, "auto").unwrap();
+        insert_interval(
+            &conn,
+            "Photoshop.exe",
+            Some(p),
+            ts("2026-10-19", 9, 0),
+            ts("2026-10-19", 13, 0),
+            true,
+            "auto",
+        )
+        .unwrap();
+        insert_interval(
+            &conn,
+            "Photoshop.exe",
+            Some(p),
+            ts("2026-10-23", 9, 0),
+            ts("2026-10-23", 12, 0),
+            true,
+            "auto",
+        )
+        .unwrap();
         let progress = progress_for_goals(&conn, &goals, "2026-10-24").unwrap();
         assert_eq!(progress[0].seconds, 0);
         assert!(!progress[0].reached);
@@ -1477,8 +1570,25 @@ mod tests {
     #[test]
     fn live_slice_adds_to_status_and_does_not_double_count() {
         let conn = test_db();
-        insert_interval(&conn, "Photoshop.exe", None, ts("2026-10-24", 8, 0), ts("2026-10-24", 9, 0), true, "auto").unwrap();
-        let id = insert_open_session(&conn, "Photoshop.exe", None, ts("2026-10-24", 10, 0), true, "auto").unwrap();
+        insert_interval(
+            &conn,
+            "Photoshop.exe",
+            None,
+            ts("2026-10-24", 8, 0),
+            ts("2026-10-24", 9, 0),
+            true,
+            "auto",
+        )
+        .unwrap();
+        let id = insert_open_session(
+            &conn,
+            "Photoshop.exe",
+            None,
+            ts("2026-10-24", 10, 0),
+            true,
+            "auto",
+        )
+        .unwrap();
         let live = vec![LiveSlice {
             id,
             app: "Photoshop.exe".into(),
@@ -1488,7 +1598,8 @@ mod tests {
             source: "auto".into(),
         }];
         let now = ts("2026-10-24", 10, 30);
-        let totals = status_totals(&conn, "2026-10-24", "2026-10-19", "2026-10-25", &live, now).unwrap();
+        let totals =
+            status_totals(&conn, "2026-10-24", "2026-10-19", "2026-10-25", &live, now).unwrap();
         assert_eq!(totals.today_seconds, 5400);
         assert_eq!(totals.today_by_app[0].seconds, 5400);
     }
@@ -1498,7 +1609,13 @@ mod tests {
         let conn = test_db();
         let id = insert_open_session(&conn, "Photoshop.exe", None, 1000, true, "auto").unwrap();
         cleanup(&conn).unwrap();
-        let count: i64 = conn.query_row("SELECT COUNT(*) FROM sessions WHERE id = ?1", params![id], |r| r.get(0)).unwrap();
+        let count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sessions WHERE id = ?1",
+                params![id],
+                |r| r.get(0),
+            )
+            .unwrap();
         assert_eq!(count, 0);
     }
 }

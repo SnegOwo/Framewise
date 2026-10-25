@@ -4,7 +4,10 @@ pub fn local_datetime(ts: i64) -> DateTime<Local> {
     match Local.timestamp_opt(ts, 0) {
         LocalResult::Single(dt) => dt,
         LocalResult::Ambiguous(a, _) => a,
-        LocalResult::None => Local.timestamp_opt(ts, 0).earliest().unwrap_or_else(Local::now),
+        LocalResult::None => Local
+            .timestamp_opt(ts, 0)
+            .earliest()
+            .unwrap_or_else(Local::now),
     }
 }
 

@@ -15,14 +15,7 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 
     let open = MenuItem::with_id(app, "open", "Open Framewise", true, None::<&str>)?;
     let mini = MenuItem::with_id(app, "mini", "Mini timer", true, None::<&str>)?;
-    let pause = CheckMenuItem::with_id(
-        app,
-        "pause",
-        "Pause tracking",
-        true,
-        paused,
-        None::<&str>,
-    )?;
+    let pause = CheckMenuItem::with_id(app, "pause", "Pause tracking", true, paused, None::<&str>)?;
     let project_menu = Submenu::with_id(app, "projects", "Projects", true)?;
     let none = CheckMenuItem::with_id(
         app,
@@ -45,13 +38,7 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         project_menu.append(&item)?;
     }
     project_menu.append(&PredefinedMenuItem::separator(app)?)?;
-    let new_project = MenuItem::with_id(
-        app,
-        "new-project",
-        "New project...",
-        true,
-        None::<&str>,
-    )?;
+    let new_project = MenuItem::with_id(app, "new-project", "New project...", true, None::<&str>)?;
     let manage = MenuItem::with_id(
         app,
         "manage-projects",
@@ -143,7 +130,9 @@ fn handle_menu(app: &AppHandle, id: &str) {
                 .db
                 .set_setting("paused", if paused { "true" } else { "false" });
             if paused {
-                state.tracker.cut_all(&state.db, chrono::Local::now().timestamp());
+                state
+                    .tracker
+                    .cut_all(&state.db, chrono::Local::now().timestamp());
             }
             let _ = refresh(app);
             let _ = app.emit("framewise:state-changed", ());
@@ -151,7 +140,9 @@ fn handle_menu(app: &AppHandle, id: &str) {
         "quit" => {
             use std::sync::atomic::Ordering;
             state.quitting.store(true, Ordering::SeqCst);
-            state.tracker.cut_all(&state.db, chrono::Local::now().timestamp());
+            state
+                .tracker
+                .cut_all(&state.db, chrono::Local::now().timestamp());
             let _ = state.db.checkpoint();
             app.exit(0);
         }
@@ -165,7 +156,9 @@ fn handle_menu(app: &AppHandle, id: &str) {
             let value = other.trim_start_matches("project:");
             let project_id = value.parse::<i64>().ok().filter(|id| *id > 0);
             let _ = state.db.select_project(project_id);
-            state.tracker.cut_all(&state.db, chrono::Local::now().timestamp());
+            state
+                .tracker
+                .cut_all(&state.db, chrono::Local::now().timestamp());
             let _ = refresh(app);
             let _ = app.emit("framewise:state-changed", ());
         }

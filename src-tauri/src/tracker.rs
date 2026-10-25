@@ -223,7 +223,8 @@ fn tick(app: &AppHandle) {
 
     let mut switched = false;
     match (&inner.current, &desired) {
-        (Some(cur), Some(want)) if cur.app.eq_ignore_ascii_case(&want.0) && cur.project_id == want.1 => {}
+        (Some(cur), Some(want))
+            if cur.app.eq_ignore_ascii_case(&want.0) && cur.project_id == want.1 => {}
         (Some(_), _) => {
             // Switching apps, project, or walking away from a tracked app.
             let cur = inner.current.take();
@@ -244,14 +245,7 @@ fn tick(app: &AppHandle) {
                 prev_epoch.min(now)
             };
             if start <= now {
-                match start_segment(
-                    &state.db,
-                    &app_name,
-                    project_id,
-                    adobe,
-                    "auto",
-                    start,
-                ) {
+                match start_segment(&state.db, &app_name, project_id, adobe, "auto", start) {
                     Ok(seg) => inner.current = Some(seg),
                     Err(e) => eprintln!("framewise: could not open session: {e}"),
                 }
@@ -276,7 +270,11 @@ fn tick(app: &AppHandle) {
                 .unwrap_or(false);
         if rendering {
             if inner.render.is_none() {
-                let start = if resumed_from_gap { now } else { prev_epoch.min(now) };
+                let start = if resumed_from_gap {
+                    now
+                } else {
+                    prev_epoch.min(now)
+                };
                 if start <= now {
                     if let Ok(seg) = start_segment(
                         &state.db,
@@ -385,22 +383,13 @@ fn notify_goals(app: &AppHandle, db: &Db) {
         } else {
             "Daily goal reached"
         };
-        let scope = p
-            .goal
-            .project_name
-            .as_deref()
-            .unwrap_or("All projects");
+        let scope = p.goal.project_name.as_deref().unwrap_or("All projects");
         let body = format!(
             "{scope} - {} of {}",
             crate::timeutil::duration_label(p.seconds),
             crate::timeutil::duration_label(p.target_seconds)
         );
-        let _ = app
-            .notification()
-            .builder()
-            .title(title)
-            .body(body)
-            .show();
+        let _ = app.notification().builder().title(title).body(body).show();
         break;
     }
 }
@@ -423,7 +412,10 @@ pub fn attribution(
         return None;
     }
     let is_adobe = adobe_list.contains(&key);
-    Some((app.to_string(), if is_adobe { active_project } else { None }))
+    Some((
+        app.to_string(),
+        if is_adobe { active_project } else { None },
+    ))
 }
 
 pub fn idle_cutoff(now: i64, idle_ms: u64, _timeout_secs: i64, segment_start: i64) -> i64 {

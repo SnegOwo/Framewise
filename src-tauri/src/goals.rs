@@ -27,10 +27,7 @@ mod tests {
     use super::*;
 
     fn totals(values: &[(&str, i64)]) -> BTreeMap<String, i64> {
-        values
-            .iter()
-            .map(|(d, s)| ((*d).to_string(), *s))
-            .collect()
+        values.iter().map(|(d, s)| ((*d).to_string(), *s)).collect()
     }
 
     #[test]

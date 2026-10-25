@@ -65,12 +65,14 @@ fn save_window_state(window: &tauri::Window) {
         return;
     };
     if let Ok(size) = window.inner_size() {
-        let _ = state
-            .db
-            .set_setting("window_width", &(size.width as f64 / scale).round().to_string());
-        let _ = state
-            .db
-            .set_setting("window_height", &(size.height as f64 / scale).round().to_string());
+        let _ = state.db.set_setting(
+            "window_width",
+            &(size.width as f64 / scale).round().to_string(),
+        );
+        let _ = state.db.set_setting(
+            "window_height",
+            &(size.height as f64 / scale).round().to_string(),
+        );
     }
     if let Ok(position) = window.outer_position() {
         let _ = state
@@ -144,21 +146,17 @@ pub fn show_mini_window(
         return Ok(());
     }
 
-    let mut builder = WebviewWindowBuilder::new(
-        app,
-        "mini",
-        WebviewUrl::App("index.html".into()),
-    )
-    .title("Framewise")
-    .inner_size(360.0, 132.0)
-    .min_inner_size(150.0, 64.0)
-    .max_inner_size(640.0, 420.0)
-    .resizable(true)
-    .maximizable(false)
-    .minimizable(false)
-    .decorations(false)
-    .always_on_top(true)
-    .skip_taskbar(true);
+    let mut builder = WebviewWindowBuilder::new(app, "mini", WebviewUrl::App("index.html".into()))
+        .title("Framewise")
+        .inner_size(360.0, 132.0)
+        .min_inner_size(150.0, 64.0)
+        .max_inner_size(640.0, 420.0)
+        .resizable(true)
+        .maximizable(false)
+        .minimizable(false)
+        .decorations(false)
+        .always_on_top(true)
+        .skip_taskbar(true);
 
     // Place the window before it is created so it never flashes at the default
     // position before jumping next to the tray.
