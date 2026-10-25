@@ -12,9 +12,10 @@
 <p align="center">
   <a href="https://snegowo.github.io/Framewise/">Website</a> ·
   <a href="https://snegowo.github.io/Framewise/docs.html">Docs</a> ·
+  <a href="https://youtu.be/F-OgFYTikhQ">Trailer</a> ·
   <a href="#why-framewise">Why</a> ·
   <a href="#screenshots">Screenshots</a> ·
-  <a href="#portable">Portable</a> ·
+  <a href="#download">Download</a> ·
   <a href="#privacy">Privacy</a> ·
   <a href="#development">Development</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
@@ -27,6 +28,8 @@
 Framewise follows the app in focus and credits Premiere, After Effects and Photoshop
 time to the project you are actually on. It lives in the tray, keeps every number on
 your machine, and stays out of the edit.
+
+**[Watch the 26-second launch film on YouTube](https://youtu.be/F-OgFYTikhQ)**
 
 > **Status:** Framewise 1.0 is available for Windows 10/11. Open source under MIT.
 > No telemetry, no accounts. The only optional network request is a monthly update
