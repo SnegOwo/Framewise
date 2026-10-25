@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import type { Project, ProjectDetail } from "../types";
   import { open as openFileDialog } from "@tauri-apps/plugin-dialog";
   import { api, errMessage } from "../api";
@@ -59,6 +60,7 @@
   let detail = $state<ProjectDetail | null>(null);
   let detailHeat = $state<{ day: string; seconds: number }[]>([]);
   let detailLoading = $state(false);
+  let detailRequest = 0;
 
   let today = $derived($boot?.today ?? todayStr());
   let week = $derived(weekBounds(today));
@@ -214,15 +216,17 @@
   }
 
   async function refreshDetail(id: number) {
+    const request = ++detailRequest;
     try {
       const [next, heat] = await Promise.all([
         api.projectDetail(id),
         api.heatmap(daysAgo(181, today), today, id, false),
       ]);
+      if (request !== detailRequest || detailId !== id) return;
       detail = next;
       detailHeat = heat;
     } catch (cause) {
-      toast(errMessage(cause), "error");
+      if (request === detailRequest) toast(errMessage(cause), "error");
     }
   }
 
@@ -285,6 +289,22 @@
   $effect(() => {
     $refreshTick;
     if (detailId != null) void refreshDetail(detailId);
+  });
+
+  onMount(() => {
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible" && detailId != null) {
+        void refreshDetail(detailId);
+      }
+    };
+    const timer = window.setInterval(refreshIfVisible, 30_000);
+    window.addEventListener("focus", refreshIfVisible);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshIfVisible);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
   });
 
   function onWindowClick(event: MouseEvent) {

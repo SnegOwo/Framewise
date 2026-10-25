@@ -111,13 +111,13 @@ timeline, one heatmap, and reports you can export without an account.
 Framewise 1.0 is available for Windows 10/11 from
 [GitHub Releases](https://github.com/SnegOwo/Framewise/releases/latest):
 
-- **Installer** — `Framewise_1.0.1_x64-setup.exe`
-- **Portable** — `Framewise_1.0.1_x64_portable.zip`
+- **Installer** — `Framewise_1.0.2_x64-setup.exe`
+- **Portable** — `Framewise_1.0.2_x64_portable.zip`
 
 The portable zip contains:
 
 ```
-Framewise_1.0.1_x64_portable/
+Framewise_1.0.2_x64_portable/
 ├── framewise.exe
 ├── framewise.portable
 └── README.txt

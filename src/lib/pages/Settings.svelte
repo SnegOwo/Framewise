@@ -361,19 +361,24 @@
     <Rule />
     <div class="eyebrow group-label">Updates</div>
 
-    <div class="setting-row">
+    <div class="setting-row" class:disabled={portable}>
       <div class="setting-text">
         <div class="setting-name">Monthly update check</div>
         <div class="setting-help">
-          Off by default. One request a month to GitHub; no usage data is sent.
+          {portable
+            ? "Unavailable in portable mode. Update from the portable zip."
+            : "Off by default. One request a month to GitHub; no usage data is sent."}
         </div>
       </div>
       <button
         class="toggle"
-        class:on={$boot?.settings.autoUpdateCheck}
-        onclick={() => void saveSettings({ autoUpdateCheck: !$boot?.settings.autoUpdateCheck })}
-        aria-pressed={$boot?.settings.autoUpdateCheck}
+        class:on={$boot?.settings.autoUpdateCheck && !portable}
+        onclick={() => {
+          if (!portable) void saveSettings({ autoUpdateCheck: !$boot?.settings.autoUpdateCheck });
+        }}
+        aria-pressed={$boot?.settings.autoUpdateCheck && !portable}
         aria-label="Monthly update check"
+        disabled={portable}
       >
         <span class="knob"></span>
       </button>
@@ -459,6 +464,10 @@
 
   .setting-row:last-child {
     border-bottom: 0;
+  }
+
+  .setting-row.disabled {
+    opacity: 0.55;
   }
 
   .setting-text {
