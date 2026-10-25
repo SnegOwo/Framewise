@@ -93,6 +93,11 @@ button {
   cursor: pointer;
 }
 
+:where(a, button, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 h1,
 h2,
 h3,
@@ -109,6 +114,7 @@ p {
   position: fixed;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
   pointer-events: none;
   background:
     radial-gradient(
@@ -122,6 +128,57 @@ p {
       color-mix(in srgb, var(--text) 2.2%, transparent) 3px 4px
     );
   opacity: 0.85;
+}
+
+.orb {
+  position: absolute;
+  width: 46vw;
+  height: 46vw;
+  border-radius: 50%;
+  opacity: 0.16;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 28%, transparent),
+    transparent 68%
+  );
+  will-change: transform;
+}
+
+.orb-one {
+  top: -18vw;
+  left: -12vw;
+  animation: orb-drift-one 26s ease-in-out infinite alternate;
+}
+
+.orb-two {
+  top: 34vh;
+  right: -22vw;
+  width: 38vw;
+  height: 38vw;
+  opacity: 0.1;
+  animation: orb-drift-two 32s ease-in-out infinite alternate;
+}
+
+html.light .orb {
+  opacity: 0.12;
+}
+
+@keyframes orb-drift-one {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(8vw, 10vh, 0) scale(1.14);
+  }
+}
+
+@keyframes orb-drift-two {
+  from {
+    transform: translate3d(0, 0, 0) scale(1.08);
+  }
+  to {
+    transform: translate3d(-10vw, -8vh, 0) scale(0.92);
+  }
 }
 
 .scroll-progress {
@@ -402,7 +459,28 @@ html.light .icon-moon {
   min-width: 0;
 }
 
+.hero-aura {
+  position: absolute;
+  top: 8%;
+  right: -10%;
+  width: 84%;
+  height: 76%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 16%, transparent),
+    transparent 66%
+  );
+  filter: blur(24px);
+  opacity: 0.55;
+  transform: translate3d(calc(var(--mx, 0) * -14px), calc(var(--my, 0) * -14px), 0);
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .hero-tabs {
+  position: relative;
+  z-index: 2;
   display: flex;
   gap: 3px;
   width: fit-content;
@@ -414,6 +492,7 @@ html.light .icon-moon {
 }
 
 .hero-tabs button {
+  position: relative;
   height: 27px;
   padding: 0 11px;
   border: 0;
@@ -425,6 +504,39 @@ html.light .icon-moon {
   transition:
     background-color 150ms ease,
     color 150ms ease;
+}
+
+.hero-tabs button::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  bottom: 3px;
+  left: 10px;
+  height: 1.5px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.hero-tabs button.active::after {
+  opacity: 0.85;
+  animation: tab-timer 7000ms linear forwards;
+}
+
+.hero-tabs:hover button.active::after,
+.hero-tabs:focus-within button.active::after {
+  animation-play-state: paused;
+}
+
+@keyframes tab-timer {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .hero-tabs button:hover {
@@ -493,24 +605,183 @@ html.light .icon-moon {
   box-shadow: var(--shadow);
 }
 
-.mini-float img {
-  width: 100%;
-  height: auto;
-  border-radius: 10px;
+.mini-live {
+  z-index: 3;
+  width: 208px;
+  padding: 11px 11px 9px;
+  border-radius: 18px;
+  cursor: default;
+  translate: calc(var(--mx, 0) * 8px) calc(var(--my, 0) * 8px);
+  transition:
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    translate 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 240ms ease,
+    border-color 240ms ease;
 }
 
-.mini-caption {
-  display: flex;
-  flex-direction: column;
-  padding: 7px 6px 3px;
-  font-size: 12px;
-  font-weight: 500;
+.mini-live:hover {
+  transform: translateY(-4px);
+  border-color: var(--line-strong);
+  box-shadow: 0 34px 80px rgba(0, 0, 0, 0.42);
 }
 
-.mini-caption em {
+.mini-live.pinned {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  box-shadow:
+    0 0 0 1px var(--accent-soft),
+    var(--shadow);
+}
+
+.mini-live.paused .mini-clock {
   color: var(--muted);
-  font-style: normal;
-  font-size: 11px;
+}
+
+html.light .mini-live:hover {
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.16);
+}
+
+.mini-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mini-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.mini-project {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  margin-left: -2px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-2);
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.mini-control:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.mini-control:active {
+  transform: scale(0.92);
+}
+
+.mini-pin {
+  margin-left: auto;
+}
+
+.mini-pin[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.mini-icon-play {
+  display: none;
+}
+
+.mini-live.paused .mini-icon-pause {
+  display: none;
+}
+
+.mini-live.paused .mini-icon-play {
+  display: block;
+}
+
+.mini-clock {
+  margin-top: 8px;
+  font-size: 31px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.mini-sub {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-live-dot {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--accent);
+  animation: mini-pulse 2s ease-in-out infinite;
+}
+
+.mini-live.paused .mini-live-dot {
+  background: var(--muted-2);
+  animation: none;
+}
+
+.mini-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 7px;
+  color: var(--muted-2);
+  font-size: 9.5px;
+}
+
+.mini-grip {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
+  border-radius: 2px;
+  opacity: 0.55;
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0 2px,
+    var(--muted-2) 2px 3px
+  );
+}
+
+@keyframes mini-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 var(--accent-soft);
+  }
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 4px transparent;
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -587,18 +858,51 @@ html.light .icon-moon {
 }
 
 .feature {
+  position: relative;
+  overflow: hidden;
   padding: 22px;
   border: 1px solid transparent;
   border-radius: 20px;
   background: var(--surface);
   transition:
-    background-color 150ms ease,
-    transform 150ms ease;
+    background-color 220ms ease,
+    border-color 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms ease;
+}
+
+.feature::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    220px circle at var(--px, 50%) var(--py, 50%),
+    color-mix(in srgb, var(--accent) 9%, transparent),
+    transparent 72%
+  );
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+
+.feature > * {
+  position: relative;
+  z-index: 1;
 }
 
 .feature:hover {
+  border-color: var(--line);
   background: var(--surface-2);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.18);
+}
+
+.feature:hover::before {
+  opacity: 1;
+}
+
+html.light .feature:hover {
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.07);
 }
 
 .feature-icon {
@@ -610,6 +914,11 @@ html.light .icon-moon {
   border-radius: 10px;
   background: var(--accent-soft);
   color: var(--accent-text);
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.feature:hover .feature-icon {
+  transform: translateY(-1px) rotate(-6deg) scale(1.08);
 }
 
 .feature h3 {
@@ -637,6 +946,7 @@ html.light .icon-moon {
 }
 
 .screen-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -646,19 +956,59 @@ html.light .icon-moon {
   background: var(--surface);
   text-align: left;
   transition:
-    transform 150ms ease,
-    border-color 150ms ease;
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.screen-card::after {
+  content: "Open";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  color: var(--text);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 22px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 200ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  backdrop-filter: blur(8px);
 }
 
 .screen-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: var(--line-strong);
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.2);
+}
+
+.screen-card:hover::after {
+  opacity: 1;
+  transform: none;
+}
+
+html.light .screen-card:hover {
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.08);
 }
 
 .screen-card img {
   width: 100%;
   aspect-ratio: 1200 / 840;
   object-fit: cover;
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.screen-card:hover img {
+  transform: scale(1.018);
 }
 
 .screen-card.large {
@@ -711,9 +1061,42 @@ html.light .icon-moon {
 }
 
 .step {
+  position: relative;
+  overflow: hidden;
   padding: 24px;
   border-radius: 20px;
   background: var(--surface);
+  transition:
+    background-color 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.step::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    260px circle at var(--px, 50%) var(--py, 50%),
+    color-mix(in srgb, var(--accent) 8%, transparent),
+    transparent 72%
+  );
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+
+.step > * {
+  position: relative;
+  z-index: 1;
+}
+
+.step:hover {
+  background: var(--surface-2);
+  transform: translateY(-2px);
+}
+
+.step:hover::before {
+  opacity: 1;
 }
 
 .step-icon {
@@ -725,6 +1108,14 @@ html.light .icon-moon {
   border-radius: 10px;
   background: var(--surface-2);
   color: var(--muted);
+  transition:
+    color 200ms ease,
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.step:hover .step-icon {
+  color: var(--accent-text);
+  transform: rotate(-5deg) scale(1.06);
 }
 
 .step h3 {
@@ -959,6 +1350,34 @@ html.light .icon-moon {
   background: var(--surface);
 }
 
+.lightbox[open] {
+  animation: lightbox-in 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lightbox[open]::backdrop {
+  animation: backdrop-in 240ms ease;
+}
+
+@keyframes lightbox-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .lightbox::backdrop {
   background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(6px);
@@ -1041,16 +1460,49 @@ html.light .icon-moon {
 
 .js .reveal {
   opacity: 0;
-  transform: translateY(12px);
-  transition:
-    opacity 600ms ease,
-    transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
-  transition-delay: var(--delay, 0ms);
+  transform: translateY(18px);
 }
 
 .js .reveal.in {
   opacity: 1;
   transform: none;
+  animation: reveal-in 720ms cubic-bezier(0.22, 1, 0.36, 1) var(--delay, 0ms) backwards;
+}
+
+.feature-grid .reveal:nth-child(2),
+.screen-grid .reveal:nth-child(2),
+.steps .reveal:nth-child(2) {
+  --delay: 70ms;
+}
+
+.feature-grid .reveal:nth-child(3),
+.screen-grid .reveal:nth-child(3),
+.steps .reveal:nth-child(3) {
+  --delay: 140ms;
+}
+
+.feature-grid .reveal:nth-child(4),
+.screen-grid .reveal:nth-child(4) {
+  --delay: 210ms;
+}
+
+.screen-grid .reveal:nth-child(5) {
+  --delay: 280ms;
+}
+
+.screen-grid .reveal:nth-child(6) {
+  --delay: 350ms;
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 ::view-transition-old(root),
@@ -1152,7 +1604,16 @@ html.light .icon-moon {
   }
 
   .mini-float {
-    display: none;
+    position: relative;
+    right: auto;
+    bottom: auto;
+    display: block;
+    width: 196px;
+    margin: -18px auto 0;
+  }
+
+  .hero-aura {
+    opacity: 0.4;
   }
 
   .hero-actions .button {
@@ -1200,5 +1661,6 @@ html.light .icon-moon {
   .js .reveal {
     opacity: 1;
     transform: none;
+    animation-delay: 0ms !important;
   }
 }

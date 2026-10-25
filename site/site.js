@@ -23,8 +23,15 @@ const HERO_SHOTS = {
 
 const heroImage = document.getElementById("hero-shot");
 const heroTabs = [...document.querySelectorAll(".hero-tabs button")];
+const heroTabsWrap = document.querySelector(".hero-tabs");
+const heroVisual = document.querySelector(".hero-visual");
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const HERO_ORDER = ["dashboard", "projects", "reports"];
+const TAB_MS = 7000;
 let heroShot = "dashboard";
 let swapTimer;
+let rotateTimer;
+let tabHeld = false;
 
 function showHeroShot(name) {
   const shot = HERO_SHOTS[name];
@@ -48,8 +55,102 @@ function showHeroShot(name) {
   }
 }
 
+function stopHeroRotate() {
+  clearInterval(rotateTimer);
+  rotateTimer = undefined;
+}
+
+function scheduleHeroRotate() {
+  stopHeroRotate();
+  if (reducedMotion || tabHeld) return;
+  rotateTimer = setInterval(() => {
+    if (tabHeld || document.hidden) return;
+    const index = HERO_ORDER.indexOf(heroShot);
+    showHeroShot(HERO_ORDER[(index + 1) % HERO_ORDER.length]);
+  }, TAB_MS);
+}
+
 heroTabs.forEach((tab) => {
-  tab.addEventListener("click", () => showHeroShot(tab.dataset.shot));
+  tab.addEventListener("click", () => {
+    showHeroShot(tab.dataset.shot);
+    scheduleHeroRotate();
+  });
+});
+
+heroTabsWrap?.addEventListener("pointerenter", () => {
+  tabHeld = true;
+  stopHeroRotate();
+});
+heroTabsWrap?.addEventListener("pointerleave", () => {
+  tabHeld = false;
+  scheduleHeroRotate();
+});
+heroTabsWrap?.addEventListener("focusin", () => {
+  tabHeld = true;
+  stopHeroRotate();
+});
+heroTabsWrap?.addEventListener("focusout", () => {
+  tabHeld = false;
+  scheduleHeroRotate();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopHeroRotate();
+  else scheduleHeroRotate();
+});
+
+showHeroShot("dashboard");
+scheduleHeroRotate();
+
+// Interactive mini timer preview.
+const miniDemo = document.getElementById("mini-demo");
+const miniClock = document.getElementById("mini-clock");
+const miniPause = document.getElementById("mini-pause");
+const miniPin = document.getElementById("mini-pin");
+const miniState = document.getElementById("mini-state");
+let miniSeconds = 1 * 3600 + 42 * 60 + 18;
+let miniRunning = true;
+
+function renderMini() {
+  if (!miniClock) return;
+  const hours = Math.floor(miniSeconds / 3600);
+  const minutes = Math.floor((miniSeconds % 3600) / 60);
+  const seconds = miniSeconds % 60;
+  miniClock.textContent = [hours, minutes, seconds]
+    .map((part) => String(part).padStart(2, "0"))
+    .join(":");
+}
+
+function renderMiniState() {
+  if (!miniState) return;
+  if (!miniRunning) miniState.textContent = "Paused · click play to resume";
+  else if (miniPin?.getAttribute("aria-pressed") === "true") miniState.textContent = "Pinned · stays open";
+  else miniState.textContent = "Live demo · click pause or pin";
+}
+
+renderMini();
+renderMiniState();
+
+window.setInterval(() => {
+  if (document.hidden || !miniRunning) return;
+  miniSeconds += 1;
+  renderMini();
+}, 1000);
+
+miniPause?.addEventListener("click", () => {
+  miniRunning = !miniRunning;
+  miniDemo?.classList.toggle("paused", !miniRunning);
+  miniPause.setAttribute("aria-pressed", String(!miniRunning));
+  miniPause.setAttribute("aria-label", miniRunning ? "Pause demo timer" : "Resume demo timer");
+  renderMiniState();
+});
+
+miniPin?.addEventListener("click", () => {
+  const pinned = miniPin.getAttribute("aria-pressed") === "true";
+  miniPin.setAttribute("aria-pressed", String(!pinned));
+  miniPin.setAttribute("aria-label", pinned ? "Pin demo timer" : "Unpin demo timer");
+  miniDemo?.classList.toggle("pinned", !pinned);
+  renderMiniState();
 });
 
 function applyTheme(theme, animate) {
@@ -152,25 +253,38 @@ window.addEventListener(
 );
 updateScrollUi();
 
-// Subtle pointer tilt on the hero frame.
-const heroVisual = document.querySelector(".hero-visual");
+// Subtle pointer tilt on the hero frame + parallax on the live preview.
 const heroFrame = document.querySelector(".app-frame");
-const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const finePointer = window.matchMedia("(pointer: fine)").matches;
 
-if (heroVisual && heroFrame && finePointer && !reduced) {
+if (heroVisual && heroFrame && finePointer && !reducedMotion) {
   heroVisual.addEventListener("pointermove", (event) => {
     const rect = heroFrame.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width - 0.5;
     const y = (event.clientY - rect.top) / rect.height - 0.5;
+    heroVisual.style.setProperty("--mx", x.toFixed(3));
+    heroVisual.style.setProperty("--my", y.toFixed(3));
     heroFrame.style.setProperty("--ry", `${x * 4.5}deg`);
     heroFrame.style.setProperty("--rx", `${-y * 3.5}deg`);
   });
 
   heroVisual.addEventListener("pointerleave", () => {
+    heroVisual.style.removeProperty("--mx");
+    heroVisual.style.removeProperty("--my");
     heroFrame.style.removeProperty("--rx");
     heroFrame.style.removeProperty("--ry");
   });
+}
+
+// Pointer spotlight on cards.
+if (finePointer) {
+  for (const card of document.querySelectorAll(".feature, .step")) {
+    card.addEventListener("pointermove", (event) => {
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty("--px", `${event.clientX - rect.left}px`);
+      card.style.setProperty("--py", `${event.clientY - rect.top}px`);
+    });
+  }
 }
 
 // Lightbox with keyboard / arrow navigation.
