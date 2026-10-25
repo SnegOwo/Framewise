@@ -55,8 +55,10 @@
         <nav class="nav" aria-label="Sections">
           <a href="#features">Features</a>
           <a href="#screens">Screens</a>
+          <a href="#trailer">Trailer</a>
           <a href="#how">How it works</a>
           <a href="#offline">Offline</a>
+          <a href="docs.html">Docs</a>
           <a
             class="external"
             href="https://github.com/SnegOwo/Framewise"
@@ -195,6 +197,38 @@
           <span role="listitem">Tray mini timer</span>
         </div>
       </div>
+
+      <section class="section container" id="trailer">
+        <div class="section-head trailer-head reveal">
+          <div>
+            <span class="eyebrow">Launch film</span>
+            <h2>26 seconds.<br /><span>One quiet day.</span></h2>
+          </div>
+          <p class="trailer-note">
+            No voiceover, no stock footage. Just the app, the timeline and the work.
+          </p>
+        </div>
+        <div class="trailer-frame reveal" id="trailer-frame">
+          <video
+            id="trailer-video"
+            poster="assets/trailer-poster.jpg"
+            preload="none"
+            playsinline
+            controls
+          >
+            <source src="assets/trailer.mp4" type="video/mp4" />
+          </video>
+          <button class="trailer-play" id="trailer-play" type="button" aria-label="Play the Framewise launch film">
+            <span class="play-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M8 5.3c0-.9 1-1.4 1.7-.9l9 6.1c.6.4.6 1.3 0 1.7l-9 6.1c-.7.5-1.7 0-1.7-.9V5.3Z" />
+              </svg>
+            </span>
+            <span>Watch the launch film</span>
+          </button>
+          <span class="trailer-badge">26s · sound on</span>
+        </div>
+      </section>
 
       <section class="section container" id="features">
         <div class="section-head reveal">
@@ -431,6 +465,7 @@
           <span>Framewise</span>
         </a>
         <span>Coming soon for Windows 10/11</span>
+        <a class="footer-link" href="docs.html">Docs</a>
         <a
           class="footer-link"
           href="https://github.com/SnegOwo/Framewise"

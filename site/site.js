@@ -377,3 +377,24 @@ if (year) year.textContent = String(new Date().getFullYear());
 
 const brandVideo = document.getElementById("brand-video");
 brandVideo?.addEventListener("playing", () => brandVideo.classList.add("playing"));
+
+// Launch film: custom poster/play overlay, native controls after the first play.
+const trailerFrame = document.getElementById("trailer-frame");
+const trailerVideo = document.getElementById("trailer-video");
+const trailerPlay = document.getElementById("trailer-play");
+
+trailerPlay?.addEventListener("click", () => {
+  if (!trailerVideo) return;
+  trailerPlay.classList.add("hidden");
+  trailerFrame?.classList.add("playing");
+  trailerVideo.play().catch(() => {
+    trailerPlay.classList.remove("hidden");
+    trailerFrame?.classList.remove("playing");
+  });
+});
+
+trailerVideo?.addEventListener("ended", () => {
+  trailerPlay?.classList.remove("hidden");
+  trailerFrame?.classList.remove("playing");
+  trailerVideo.currentTime = 0;
+});

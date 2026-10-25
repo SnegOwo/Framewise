@@ -11,6 +11,7 @@
 
 <p align="center">
   <a href="https://snegowo.github.io/Framewise/">Website</a> ·
+  <a href="https://snegowo.github.io/Framewise/docs.html">Docs</a> ·
   <a href="#why-framewise">Why</a> ·
   <a href="#screenshots">Screenshots</a> ·
   <a href="#portable">Portable</a> ·
@@ -139,7 +140,9 @@ npm run build:portable
 
 The landing page is at <https://snegowo.github.io/Framewise/>. Its source is in
 [`site/`](site/) and deploys from `main` through GitHub Pages, with no build step and
-no external assets.
+no external assets. The full guide lives at
+<https://snegowo.github.io/Framewise/docs.html>. The 26-second launch film is on the
+landing page.
 
 ## Privacy
 

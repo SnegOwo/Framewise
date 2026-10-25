@@ -30,6 +30,10 @@ the `/Framewise/` project path.
 - `assets/screens/` — dark and light screenshots from the current build.
 - `assets/fonts/` — Hanken Grotesk and JetBrains Mono, bundled locally.
 - There is no waitlist or form. The closing section is a static release note.
+- `docs.html` is the documentation page, with a sticky section index and the same
+  theme toggle as the landing page.
+- The launch film is `assets/trailer.mp4` (26.6 s, 1080p) with a poster in
+  `assets/trailer-poster.jpg`. It only loads when played.
 - The hero preview tabs auto-advance after a short settle; quick clicks do not reset
   the timer. The floating mini timer is a live demo with working pause, pin and
   focus-tool controls.
