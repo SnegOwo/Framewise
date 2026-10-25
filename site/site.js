@@ -259,6 +259,7 @@ if ("IntersectionObserver" in window) {
 const progress = document.querySelector(".scroll-progress span");
 const navLinks = [...document.querySelectorAll(".nav a")];
 const navSections = navLinks
+  .filter((link) => link.getAttribute("href")?.startsWith("#"))
   .map((link) => ({ link, element: document.querySelector(link.getAttribute("href")) }))
   .filter((item) => item.element);
 

@@ -161,6 +161,8 @@ executables are never tracked. Adobe executables credit the active project. Once
 project has **focus tools**, every tracked app is credited to that project and marked
 selected or other, so the dashboard can show a green/red bubble and the project can
 report a focus percentage. Projects without tools keep non-Adobe time unassigned.
+Framewise's own windows are never credited; while Framewise is in focus it keeps the
+most recently used real app's session alive, so opening the app does not create a gap.
 
 **Pausing.** Idle, lock, sleep and hibernation stop the clock. Idle time is cut back
 to the last real input, so idle minutes are never billed. A sleep gap is never

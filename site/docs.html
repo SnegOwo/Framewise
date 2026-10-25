@@ -210,6 +210,7 @@
             <li><strong>Focus tools</strong> credit the project and are marked selected.</li>
             <li><strong>Other apps</strong> on a project with tools credit the project and are marked other.</li>
             <li><strong>No tools</strong> keeps non-Adobe time unassigned, as in earlier versions.</li>
+            <li><strong>Framewise itself</strong> is never credited. While its window is in focus, the most recently used real app stays tracked.</li>
             <li><strong>Ignored apps</strong> are never tracked.</li>
           </ul>
           <h3>Pauses, idle and sleep</h3>
@@ -217,7 +218,8 @@
             Idle, lock, sleep and hibernation stop the clock. Idle time is cut back to the
             last real input, so idle minutes are never billed. A sleep gap is not bridged
             with phantom time. Sessions split automatically at midnight and when the app,
-            project or focus state changes.
+            project or focus state changes. Opening Framewise does not create a gap — its
+            own window is never counted, so the last real app keeps the session open.
           </p>
         </section>
 

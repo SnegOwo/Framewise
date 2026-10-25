@@ -37,6 +37,7 @@ pub struct TrackerInner {
     pub last_goal_check: i64,
     pub locked: bool,
     pub idle_seconds: i64,
+    pub last_app: Option<String>,
     me_sample: Option<(Instant, u64)>,
 }
 
@@ -65,6 +66,7 @@ impl Tracker {
                 last_goal_check: 0,
                 locked: false,
                 idle_seconds: 0,
+                last_app: None,
                 me_sample: None,
             }),
         }
@@ -215,13 +217,28 @@ fn tick(app: &AppHandle) {
     }
 
     let foreground = winapi::foreground_process_name();
+    let self_focused = foreground
+        .as_deref()
+        .map(is_framewise_process)
+        .unwrap_or(false);
+    // Opening Framewise should not create a gap: keep the last real app's
+    // session alive while our own window owns the foreground.
+    let active_foreground = if self_focused {
+        inner.last_app.clone()
+    } else {
+        foreground.clone()
+    };
     let desired = attribution(
-        foreground.as_deref(),
+        active_foreground.as_deref(),
         &cfg.adobe,
         &cfg.ignore,
         cfg.active_project_id,
         &cfg.active_project_tools,
     );
+
+    if !self_focused {
+        inner.last_app = desired.as_ref().map(|(app, _, _)| app.clone());
+    }
 
     let mut switched = false;
     match (&inner.current, &desired) {
@@ -266,7 +283,7 @@ fn tick(app: &AppHandle) {
                 .as_ref()
                 .map(|d| !d.0.eq_ignore_ascii_case("Adobe Media Encoder.exe"))
                 .unwrap_or(true)
-            && !foreground
+            && !active_foreground
                 .as_deref()
                 .map(|a| cfg.adobe.contains(&a.to_lowercase()))
                 .unwrap_or(false);
@@ -410,6 +427,22 @@ fn notify_goals(app: &AppHandle, db: &Db) {
 }
 
 /// Attribution rules, kept pure so they are easy to test.
+/// Framewise's own window is never credited, but while it is focused the
+/// tracker keeps the session of the most recent real app alive.
+pub fn is_framewise_process(app: &str) -> bool {
+    static SELF_NAME: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    let self_name = SELF_NAME.get_or_init(|| {
+        std::env::current_exe()
+            .ok()
+            .and_then(|path| {
+                path.file_name()
+                    .map(|name| name.to_string_lossy().into_owned())
+            })
+            .unwrap_or_else(|| "framewise.exe".into())
+    });
+    app.eq_ignore_ascii_case(self_name) || app.eq_ignore_ascii_case("framewise.exe")
+}
+
 /// Ignored apps are never tracked. Adobe apps get the active project. Once a
 /// project has tools, every tracked app is credited to it and marked focused
 /// (in the tool list) or other so project focus can be measured.
@@ -459,6 +492,23 @@ mod tests {
 
     fn set(items: &[&str]) -> HashSet<String> {
         items.iter().map(|s| s.to_lowercase()).collect()
+    }
+
+    #[test]
+    fn framewise_itself_is_recognised_and_not_tracked() {
+        assert!(is_framewise_process("Framewise.exe"));
+        assert!(is_framewise_process("FRAMEWISE.EXE"));
+        assert!(!is_framewise_process("Photoshop.exe"));
+        assert_eq!(
+            attribution(
+                Some("Framewise.exe"),
+                &HashSet::new(),
+                &set(&["framewise.exe"]),
+                Some(1),
+                &HashSet::new()
+            ),
+            None
+        );
     }
 
     #[test]
