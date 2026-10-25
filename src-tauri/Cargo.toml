@@ -1,6 +1,6 @@
 [package]
 name = "framewise"
-version = "1.0.2"
+version = "1.0.3"
 description = "A quiet, offline time tracker for Adobe creatives."
 authors = ["Sneg HQ"]
 license = "MIT"

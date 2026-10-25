@@ -112,7 +112,7 @@
       <span class="name">{$activeProject.name}</span>
     {:else}
       <span class="dot empty"></span>
-      <span class="name muted">no project</span>
+      <span class="name muted">No project</span>
     {/if}
     <Icon name="chevron-down" size={12} />
   </button>
@@ -141,6 +141,19 @@
         </button>
       {/if}
       <div class="list">
+        <button
+          class="menu-item general"
+          class:selected={$activeProject == null}
+          onclick={() => choose(null)}
+          role="option"
+          aria-selected={$activeProject == null}
+        >
+          <span class="dot empty"></span>
+          <span class="pname">No project</span>
+          <span class="client">general tracking</span>
+          {#if $activeProject == null}<span class="check"><Icon name="check" size={13} /></span>{/if}
+        </button>
+        <div class="menu-sep"></div>
         {#each filtered as project (project.id)}
           <button
             class="menu-item"
@@ -163,18 +176,6 @@
             {query.trim() ? "No matching project." : "No projects yet."}
           </div>
         {/if}
-        <div class="menu-sep"></div>
-        <button
-          class="menu-item"
-          class:selected={$activeProject == null}
-          onclick={() => choose(null)}
-          role="option"
-          aria-selected={$activeProject == null}
-        >
-          <span class="dot empty"></span>
-          <span class="pname">No project</span>
-          {#if $activeProject == null}<span class="check"><Icon name="check" size={13} /></span>{/if}
-        </button>
       </div>
       <button
         class="new"
@@ -264,6 +265,14 @@
   .list {
     max-height: 260px;
     overflow-y: auto;
+  }
+
+  .menu-item.general {
+    color: var(--text);
+  }
+
+  .menu-item.general .client {
+    color: var(--muted);
   }
 
   .pname {

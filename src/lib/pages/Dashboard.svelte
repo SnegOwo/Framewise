@@ -36,6 +36,13 @@
   let sessions = $state<Session[]>([]);
   let error = $state("");
   let clock = $state(Math.floor(Date.now() / 1000));
+  let firstRunDismissed = $state((() => {
+    try {
+      return localStorage.getItem("framewise-general-tracking") === "1";
+    } catch {
+      return false;
+    }
+  })());
 
   let adding = $state(false);
   let addPeriod = $state<"daily" | "weekly">("daily");
@@ -132,6 +139,26 @@
     navigate("sessions");
   }
 
+  function trackGenerally() {
+    firstRunDismissed = true;
+    try {
+      localStorage.setItem("framewise-general-tracking", "1");
+    } catch {
+      // ignore
+    }
+  }
+
+  $effect(() => {
+    if ($activeProjects.length > 0 && firstRunDismissed) {
+      firstRunDismissed = false;
+      try {
+        localStorage.removeItem("framewise-general-tracking");
+      } catch {
+        // ignore
+      }
+    }
+  });
+
   $effect(() => {
     year;
     heatFilter;
@@ -186,17 +213,22 @@
     </h1>
   </section>
 
-  {#if $boot && $activeProjects.length === 0}
+  {#if $boot && $activeProjects.length === 0 && !firstRunDismissed}
     <section class="start-card reveal">
       <span class="start-mark"><Icon name="target" size={20} /></span>
       <div class="start-copy">
         <span class="eyebrow">First run</span>
         <div class="start-title">Make your first project.</div>
-        <p>Name it, choose the apps that count, and Framewise starts crediting work. You can skip tools and add them later.</p>
+        <p>Name it and choose the apps that count — or track generally without a project for now.</p>
       </div>
-      <button class="btn btn-primary start-action" onclick={requestNewProject}>
-        Create a project
-      </button>
+      <div class="start-actions">
+        <button class="btn btn-primary" onclick={requestNewProject}>
+          Create a project
+        </button>
+        <button class="btn btn-ghost" onclick={trackGenerally}>
+          Track generally
+        </button>
+      </div>
     </section>
   {/if}
 
@@ -460,8 +492,10 @@
     line-height: 1.5;
   }
 
-  .start-action {
+  .start-actions {
+    display: flex;
     flex: 0 0 auto;
+    gap: 7px;
   }
 
   .status-card {
@@ -747,7 +781,7 @@
     .start-copy {
       flex-basis: calc(100% - 58px);
     }
-    .start-action {
+    .start-actions {
       margin-left: 58px;
     }
   }

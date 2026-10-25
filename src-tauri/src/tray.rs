@@ -20,7 +20,7 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let none = CheckMenuItem::with_id(
         app,
         "project:0",
-        "No project (Unassigned)",
+        "No project (General tracking)",
         true,
         active.is_none(),
         None::<&str>,

@@ -57,8 +57,17 @@
     }
   }
 
-  let projectActions = $derived<Action[]>(
-    $activeProjects.map((project) => ({
+  let projectActions = $derived<Action[]>([
+    {
+      id: "project-none",
+      label: "No project",
+      group: "Projects",
+      icon: "projects",
+      hint: $status?.activeProjectId == null ? "Active" : "General tracking",
+      keywords: "no project general tracking unassigned clear",
+      run: () => switchProject(null),
+    },
+    ...$activeProjects.map((project): Action => ({
       id: `project-${project.id}`,
       label: project.name,
       group: "Projects",
@@ -71,7 +80,7 @@
       keywords: `project switch ${project.client ?? ""}`,
       run: () => switchProject(project.id),
     })),
-  );
+  ]);
 
   let actions = $derived<Action[]>([
     {
