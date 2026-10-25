@@ -100,6 +100,7 @@ pub struct Settings {
     pub celebrate_sound: bool,
     pub goals_focus_only: bool,
     pub onboarding_complete: bool,
+    pub auto_update_check: bool,
     pub ignore_apps: Vec<String>,
     pub adobe_apps: Vec<String>,
     pub data_path: String,
@@ -216,4 +217,5 @@ pub struct AppSettingsUpdate {
     pub celebrate_sound: Option<bool>,
     pub goals_focus_only: Option<bool>,
     pub onboarding_complete: Option<bool>,
+    pub auto_update_check: Option<bool>,
 }

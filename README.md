@@ -29,7 +29,8 @@ time to the project you are actually on. It lives in the tray, keeps every numbe
 your machine, and stays out of the edit.
 
 > **Status:** Framewise 1.0 is available for Windows 10/11. Open source under MIT.
-> No telemetry, no accounts, no network requests.
+> No telemetry, no accounts. The only optional network request is a monthly update
+> check, off by default.
 
 ## Contents
 
@@ -79,8 +80,9 @@ timeline, one heatmap, and reports you can export without an account.
   opens the full app. The mini shows **Pin** — pin it to keep it open and drag it
   anywhere. Drag the corner to resize it, all the way down to a time-only clock.
   Unpinned, it behaves like a tray popover and closes when it loses focus.
-- **Portable and private.** One folder, no installer, no network requests, no remote
-  fonts, no accounts, no telemetry.
+- **Portable and private.** One folder, no installer, no remote fonts, no accounts,
+  no telemetry. The only network request is the opt-in monthly update check, and it
+  is disabled in portable mode.
 - **A guided first run.** Choose theme, whether goals count focus time only,
   notifications and launch at login. Scan for Adobe apps or pick their `.exe` files —
   or skip everything to the defaults.
@@ -109,13 +111,13 @@ timeline, one heatmap, and reports you can export without an account.
 Framewise 1.0 is available for Windows 10/11 from
 [GitHub Releases](https://github.com/SnegOwo/Framewise/releases/latest):
 
-- **Installer** — `Framewise_1.0.0_x64-setup.exe`
-- **Portable** — `Framewise_1.0.0_x64_portable.zip`
+- **Installer** — `Framewise_1.0.1_x64-setup.exe`
+- **Portable** — `Framewise_1.0.1_x64_portable.zip`
 
 The portable zip contains:
 
 ```
-Framewise_1.0.0_x64_portable/
+Framewise_1.0.1_x64_portable/
 ├── framewise.exe
 ├── framewise.portable
 └── README.txt
@@ -132,6 +134,11 @@ data/webview/            the WebView2 profile and cache
 Nothing is written to AppData or LocalAppData. Launch at login is disabled. Delete the
 folder to remove every trace. **Settings → About** reports whether the running build
 is installed or portable, with the active data path.
+
+**Updates.** Installer builds can opt into a monthly update check during first-run
+setup or in Settings. It is off by default. Portable builds update by downloading a
+new portable zip; the in-app updater is disabled in portable mode. Update manifests
+and signed artifacts are attached to each GitHub release.
 
 **Mini timer:** a single tray click opens the mini near the tray. It is a popover by
 default and closes on focus loss. Click **Pin** to keep it open, then drag it anywhere
@@ -154,10 +161,12 @@ landing page.
 
 ## Privacy
 
-Framewise makes no network requests. No telemetry, accounts, remote fonts or CDN
-assets. The content security policy allows only the app's own files and the Tauri IPC
-bridge. Your data is a single SQLite file in WAL mode with a 15-second flush and a
-checkpoint on quit.
+Framewise makes no network requests unless you enable **Settings → Updates → Monthly
+update check**. When enabled, it asks GitHub's release metadata once every 30 days
+whether a newer installer exists. No usage data, project data or identifiers are sent.
+No telemetry, accounts, remote fonts or CDN assets. The content security policy allows
+only the app's own files and the Tauri IPC bridge. Your data is a single SQLite file in
+WAL mode with a 15-second flush and a checkpoint on quit.
 
 The app records **executable names**, not window titles. App inspection looks up the
 full path locally, on demand, and never sends it anywhere.
@@ -181,8 +190,8 @@ daily or weekly goals from the dashboard; rings grow on first view only and the 
 can be edited inline. By default, **only selected focus tools count toward goals**:
 if a project has 100 minutes but only 10 are in its tools, the goal gets 10. Turn this
 off in Settings to count all tracked project time; projects without tools always count
-in full. When a goal is reached, a time-bloom reward plays with an optional soft chime
-(`Alt+P` previews it). Sound can be disabled in Settings.
+in full. When a goal is reached, a time-bloom reward plays with an optional soft chime.
+Sound can be disabled in Settings.
 
 **App inspection.** Click any app name or icon (dashboard status, sessions, timeline)
 to see its friendly name, category, executable and, when it is running, the full path.
@@ -220,7 +229,6 @@ transform/opacity only and respects `prefers-reduced-motion`.
 | `↑` `↓` | Move through dock results |
 | `Enter` | Run the selected command |
 | `Esc` | Close the dock or a dialog |
-| `Alt+P` | Preview the goal celebration |
 
 ## Development
 

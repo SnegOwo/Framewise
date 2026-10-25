@@ -1,6 +1,6 @@
 [package]
 name = "framewise"
-version = "1.0.0"
+version = "1.0.1"
 description = "A quiet, offline time tracker for Adobe creatives."
 authors = ["Sneg HQ"]
 license = "MIT"
@@ -21,7 +21,9 @@ tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-plugin-autostart = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-notification = "2"
+tauri-plugin-process = "2"
 tauri-plugin-single-instance = "2"
+tauri-plugin-updater = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rusqlite = { version = "0.37", features = ["bundled", "backup"] }

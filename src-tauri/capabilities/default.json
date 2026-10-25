@@ -12,6 +12,8 @@
     "core:window:allow-outer-size",
     "core:window:allow-scale-factor",
     "dialog:default",
-    "notification:default"
+    "notification:default",
+    "process:default",
+    "updater:default"
   ]
 }

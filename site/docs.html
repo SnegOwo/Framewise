@@ -110,7 +110,7 @@
           <div class="docs-meta">
             <span>Windows 10/11</span>
             <span>No account</span>
-            <span>No network</span>
+            <span>Offline by default</span>
             <span>MIT</span>
           </div>
         </header>
@@ -148,7 +148,7 @@
             </div>
             <div class="doc-card">
               <h3>Network</h3>
-              <p>None. The app makes no requests, loads no remote fonts and has no sign-in.</p>
+              <p>None by default. The optional monthly update check is the only request, and it is off unless enabled.</p>
             </div>
             <div class="doc-card">
               <h3>Storage</h3>
@@ -295,6 +295,7 @@
                 <tr><td>Goal notifications</td><td>One local notification when a goal is reached.</td></tr>
                 <tr><td>Count only focus time</td><td>Goals count selected focus tools; other app time still appears in reports.</td></tr>
                 <tr><td>Launch at login</td><td>Starts Framewise when you sign in. Off by default.</td></tr>
+                <tr><td>Monthly update check</td><td>Opt-in. Asks GitHub for a new installer once every 30 days. Off by default; installer build only.</td></tr>
                 <tr><td>Theme</td><td>Dark, light or follow Windows.</td></tr>
                 <tr><td>Date format</td><td>English dates or the system format.</td></tr>
                 <tr><td>Adobe apps</td><td>Adobe executables that always credit the active project. Scan the PC or add <code>.exe</code> files manually.</td></tr>
@@ -322,7 +323,6 @@
                 <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Move through dock results</td></tr>
                 <tr><td><kbd>Enter</kbd></td><td>Run the selected command</td></tr>
                 <tr><td><kbd>Esc</kbd></td><td>Close the dock or a dialog</td></tr>
-                <tr><td><kbd>Alt</kbd> <kbd>P</kbd></td><td>Preview the goal reward</td></tr>
               </tbody>
             </table>
           </div>
@@ -335,6 +335,12 @@
             WAL mode, flushed every 15 seconds and checkpointed on quit. It never reads window
             titles, keystrokes, clipboard content or file contents. App inspection resolves a
             path locally, on demand, and never sends it anywhere.
+          </p>
+          <p>
+            The app is offline by default. If you enable <strong>Monthly update check</strong>
+            during setup or in Settings, it asks GitHub for release metadata once every 30
+            days. No project data or identifiers are sent. The portable build does not use
+            the in-app updater.
           </p>
           <p>
             In the portable build, everything lives in <code>data/</code> beside the exe.
@@ -374,7 +380,7 @@ cargo check</code></pre>
             and new time will be credited as selected (green) or other (red).
           </p>
           <h3>Does Framewise work offline?</h3>
-          <p>Yes. The app makes no network requests at all. The website is separate.</p>
+          <p>Yes. The app is offline by default. If you opt into the monthly update check, it fetches only GitHub release metadata. The website is separate.</p>
           <h3>Which time counts toward a goal?</h3>
           <p>
             By default, only selected focus tools count. If you open a project with 100

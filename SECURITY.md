@@ -1,7 +1,8 @@
 # Security
 
-Framewise is an offline Windows application. It does not make network requests,
-create accounts, or send analytics.
+Framewise is an offline Windows application. It makes no network requests by default,
+does not create accounts, and sends no analytics. The optional monthly update check is
+off unless enabled, and only fetches GitHub release metadata.
 
 ## Supported versions
 

@@ -53,7 +53,7 @@ const readme = `Framewise ${version} — portable
    explaining how to install it; no download happens on its own.
 
 Tray: click once for the mini timer, double-click for the full app.
-Framewise works fully offline. No accounts, no telemetry, no remote requests.
+Framewise works fully offline. No accounts, no telemetry.
 Made by Sneg HQ. MIT licensed.
 `;
 

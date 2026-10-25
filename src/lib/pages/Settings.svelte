@@ -359,6 +359,26 @@
 
   <section class="group">
     <Rule />
+    <div class="eyebrow group-label">Updates</div>
+
+    <div class="setting-row">
+      <div class="setting-text">
+        <div class="setting-name">Monthly update check</div>
+        <div class="setting-help">
+          Off by default. One request a month to GitHub; no usage data is sent.
+        </div>
+      </div>
+      <button
+        class="toggle"
+        class:on={$boot?.settings.autoUpdateCheck}
+        onclick={() => void saveSettings({ autoUpdateCheck: !$boot?.settings.autoUpdateCheck })}
+        aria-pressed={$boot?.settings.autoUpdateCheck}
+        aria-label="Monthly update check"
+      >
+        <span class="knob"></span>
+      </button>
+    </div>
+
     <div class="eyebrow group-label">Data</div>
 
     <div class="setting-row">
@@ -401,8 +421,9 @@
     </div>
 
     <p class="privacy">
-      Framewise works entirely offline. There are no accounts, no telemetry and no remote
-      requests. Everything stays in the database shown above.
+      Framewise is offline by default. There are no accounts, no telemetry and no remote
+      assets. The optional monthly update check is the only request; everything else
+      stays in the database shown above.
     </p>
   </section>
 </div>

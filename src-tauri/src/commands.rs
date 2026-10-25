@@ -338,6 +338,12 @@ pub fn update_settings(
             .set_setting("onboarding_complete", if v { "true" } else { "false" })
             .map_err(e)?;
     }
+    if let Some(v) = update.auto_update_check {
+        state
+            .db
+            .set_setting("auto_update_check", if v { "true" } else { "false" })
+            .map_err(e)?;
+    }
     if let Some(v) = update.launch_at_login {
         if crate::portable::is_portable() {
             // Portable builds never touch the registry for autostart.

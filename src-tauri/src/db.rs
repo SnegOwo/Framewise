@@ -632,6 +632,7 @@ fn seed(conn: &Connection) -> Result<()> {
             ("celebrate_sound", "true".to_string()),
             ("goals_focus_only", "true".to_string()),
             ("onboarding_complete", "false".to_string()),
+            ("auto_update_check", "false".to_string()),
             ("seeded", "1".to_string()),
         ] {
             set_setting(&tx, k, &v)?;
@@ -702,6 +703,7 @@ pub fn read_settings(conn: &Connection, data_path: &str, version: &str) -> Resul
         celebrate_sound: setting_bool(conn, "celebrate_sound", true),
         goals_focus_only: setting_bool(conn, "goals_focus_only", true),
         onboarding_complete: setting_bool(conn, "onboarding_complete", false),
+        auto_update_check: setting_bool(conn, "auto_update_check", false),
         ignore_apps: get_app_rules_conn(conn, "ignore"),
         adobe_apps: get_app_rules_conn(conn, "adobe"),
         data_path: data_path.to_string(),

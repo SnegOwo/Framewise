@@ -5,8 +5,9 @@ it quiet, offline and predictable.
 
 ## Ground rules
 
-- **Offline first.** No runtime network requests, telemetry, remote fonts, CDNs or
-  analytics. New assets must be bundled. `npm run audit:offline` must pass.
+- **Offline first.** No runtime network requests except the explicit opt-in monthly
+  update check. No telemetry, remote fonts, CDNs or analytics. New assets must be
+  bundled. `npm run audit:offline` must pass.
 - **Privacy by default.** Never collect window titles, keystrokes, clipboard data or
   file contents. The tracker records foreground executable names and time only.
 - **Do not break tracking semantics.** Midnight splitting, idle cutoff, lock/sleep

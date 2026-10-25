@@ -13,6 +13,7 @@
   let notifyGoals = $state(true);
   let celebrateSound = $state(true);
   let launchAtLogin = $state(false);
+  let autoUpdateCheck = $state(false);
   let adobeApps = $state<string[]>([]);
   let adobeInitial = $state<string[]>([]);
   let scanPaths = $state<DetectedApp[]>([]);
@@ -32,6 +33,7 @@
     notifyGoals = settings.notifyGoals;
     celebrateSound = settings.celebrateSound;
     launchAtLogin = settings.launchAtLogin;
+    autoUpdateCheck = settings.autoUpdateCheck;
     adobeApps = [...settings.adobeApps];
     adobeInitial = [...settings.adobeApps];
     initialized = true;
@@ -112,6 +114,7 @@
               notifyGoals,
               celebrateSound,
               launchAtLogin: portable ? false : launchAtLogin,
+              autoUpdateCheck: portable ? false : autoUpdateCheck,
             },
       );
       if (!skip) applyTheme(theme, true);
@@ -257,6 +260,29 @@
         }}
         aria-pressed={launchAtLogin && !portable}
         aria-label="Launch at login"
+        disabled={portable}
+      >
+        <span class="knob"></span>
+      </button>
+    </div>
+
+    <div class="option" class:disabled={portable}>
+      <div class="option-text">
+        <div class="option-name">Monthly update check</div>
+        <div class="option-help">
+          {portable
+            ? "Available in the installer build. Portable updates use the release zip."
+            : "Opt-in. One request a month to GitHub to look for a new version."}
+        </div>
+      </div>
+      <button
+        class="toggle"
+        class:on={autoUpdateCheck && !portable}
+        onclick={() => {
+          if (!portable) autoUpdateCheck = !autoUpdateCheck;
+        }}
+        aria-pressed={autoUpdateCheck && !portable}
+        aria-label="Monthly update check"
         disabled={portable}
       >
         <span class="knob"></span>

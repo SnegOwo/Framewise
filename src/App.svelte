@@ -3,6 +3,8 @@
   import { fade } from "svelte/transition";
   import { listen } from "@tauri-apps/api/event";
   import { getCurrentWindow } from "@tauri-apps/api/window";
+  import { check, type Update } from "@tauri-apps/plugin-updater";
+  import { relaunch } from "@tauri-apps/plugin-process";
   import Logo from "./lib/components/Logo.svelte";
   import TopBar from "./lib/components/TopBar.svelte";
   import Dock from "./lib/components/Dock.svelte";
@@ -12,6 +14,7 @@
   import Celebration from "./lib/components/Celebration.svelte";
   import ProjectToolsDialog from "./lib/components/ProjectToolsDialog.svelte";
   import Onboarding from "./lib/components/Onboarding.svelte";
+  import UpdatePrompt from "./lib/components/UpdatePrompt.svelte";
   import Dashboard from "./lib/pages/Dashboard.svelte";
   import Projects from "./lib/pages/Projects.svelte";
   import Reports from "./lib/pages/Reports.svelte";
@@ -34,13 +37,20 @@
     loading,
     refreshStatus,
     status,
+    toast,
   } from "./lib/stores";
+  import { errMessage } from "./lib/api";
   import { applyTheme, watchSystemTheme, type ThemeSetting } from "./lib/theme";
   import { motionDuration } from "./lib/motion";
   import { celebrate } from "./lib/celebration";
   import { formatDuration } from "./lib/format";
 
   let bootTheme = $state<ThemeSetting | null>(null);
+  let updateInfo = $state<{ version: string; notes: string } | null>(null);
+  let updateInstalling = $state(false);
+  let pendingUpdate: Update | null = null;
+  let updateCheckStarted = false;
+  const LAST_UPDATE_KEY = "framewise-last-update-check";
 
   const isMini = (() => {
     try {
@@ -56,6 +66,66 @@
     bootTheme = setting;
     applyTheme(setting, false);
   });
+
+  async function maybeCheckUpdates() {
+    if (isMini || updateCheckStarted) return;
+    const settings = $boot?.settings;
+    if (
+      !settings ||
+      !settings.autoUpdateCheck ||
+      settings.portable ||
+      !settings.onboardingComplete
+    ) {
+      return;
+    }
+    updateCheckStarted = true;
+    let last = 0;
+    try {
+      last = Number(localStorage.getItem(LAST_UPDATE_KEY) ?? "0");
+    } catch {
+      last = 0;
+    }
+    if (Date.now() - last < 30 * 24 * 60 * 60 * 1000) return;
+    try {
+      localStorage.setItem(LAST_UPDATE_KEY, String(Date.now()));
+    } catch {
+      // ignore
+    }
+    try {
+      const update = await check();
+      if (update) {
+        pendingUpdate = update;
+        updateInfo = {
+          version: update.version,
+          notes: update.body ?? "",
+        };
+      }
+    } catch {
+      // Offline or no signed release yet. Leave the app quiet.
+    }
+  }
+
+  $effect(() => {
+    if ($boot) void maybeCheckUpdates();
+  });
+
+  async function installUpdate() {
+    if (!pendingUpdate || updateInstalling) return;
+    updateInstalling = true;
+    try {
+      await pendingUpdate.downloadAndInstall();
+      await relaunch();
+    } catch (error) {
+      updateInstalling = false;
+      toast(errMessage(error), "error");
+    }
+  }
+
+  function closeUpdate() {
+    if (updateInstalling) return;
+    pendingUpdate = null;
+    updateInfo = null;
+  }
 
   const reachedGoals = new Set<number>();
   let goalsReady = false;
@@ -146,12 +216,6 @@
         "input, textarea, select, [contenteditable='true']",
       );
       const mod = event.ctrlKey || event.metaKey;
-
-      if (event.altKey && !mod && event.key.toLowerCase() === "p") {
-        event.preventDefault();
-        celebrate("Goal reached", "Every minute counted.");
-        return;
-      }
 
       if (mod && !event.altKey && event.key.toLowerCase() === "k") {
         event.preventDefault();
@@ -248,6 +312,15 @@
   <Celebration />
   <Onboarding />
   <ProjectToolsDialog />
+  {#if updateInfo}
+    <UpdatePrompt
+      version={updateInfo.version}
+      notes={updateInfo.notes}
+      installing={updateInstalling}
+      oninstall={() => void installUpdate()}
+      onclose={closeUpdate}
+    />
+  {/if}
   <Toasts />
 {/if}
 

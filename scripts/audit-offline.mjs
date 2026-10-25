@@ -1,5 +1,5 @@
-// Fails if the built app or source references remote assets or network endpoints.
-// Framewise is offline-only, so any external URL is a bug.
+// Fails if the built app or source references remote assets or embedded endpoints.
+// Framewise is offline by default; the only endpoint is the opt-in updater in Tauri config.
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -55,4 +55,4 @@ if (findings.length > 0) {
   process.exit(1);
 }
 
-console.log("Offline audit passed: no remote assets or network endpoints found.");
+console.log("Offline audit passed: no remote assets or embedded endpoints found.");

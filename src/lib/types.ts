@@ -66,6 +66,7 @@ export interface Settings {
   celebrateSound: boolean;
   goalsFocusOnly: boolean;
   onboardingComplete: boolean;
+  autoUpdateCheck: boolean;
   ignoreApps: string[];
   adobeApps: string[];
   dataPath: string;
@@ -178,6 +179,7 @@ export interface AppSettingsUpdate {
   celebrateSound?: boolean;
   goalsFocusOnly?: boolean;
   onboardingComplete?: boolean;
+  autoUpdateCheck?: boolean;
 }
 
 export type ToastTone = "neutral" | "success" | "error";
