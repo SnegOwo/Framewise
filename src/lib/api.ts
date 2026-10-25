@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   AppDetails,
   AppSettingsUpdate,
+  AppTotal,
   Bootstrap,
   Goal,
   HeatmapCell,
@@ -26,6 +27,7 @@ export const api = {
 
   listProjects: (includeArchived = false) =>
     invoke<Project[]>("list_projects", { includeArchived }),
+  knownApps: () => invoke<AppTotal[]>("list_known_apps"),
   createProject: (name: string, client: string | null, color: string) =>
     invoke<Project>("create_project", { name, client, color }),
   updateProject: (

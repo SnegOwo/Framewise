@@ -1,7 +1,14 @@
 <script lang="ts">
   import { fly } from "svelte/transition";
   import Icon from "./Icon.svelte";
-  import { activeProject, activeProjects, loadBootstrap, switchProject, toast } from "../stores";
+  import {
+    activeProject,
+    activeProjects,
+    loadBootstrap,
+    openProjectSetup,
+    switchProject,
+    toast,
+  } from "../stores";
   import { api, errMessage } from "../api";
   import { requestNewProject } from "../router";
   import { motionDuration } from "../motion";
@@ -66,7 +73,7 @@
       open = false;
       query = "";
       await switchProject(project.id);
-      toast("Project created.", "success");
+      openProjectSetup(project, true);
     } catch (cause) {
       toast(errMessage(cause), "error");
     } finally {

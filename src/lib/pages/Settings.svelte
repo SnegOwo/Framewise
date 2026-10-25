@@ -275,7 +275,7 @@
   <section class="group">
     <Rule />
     <div class="eyebrow group-label">Adobe apps</div>
-    <div class="setting-note">Executables whose time belongs to the active project.</div>
+    <div class="setting-note">Adobe executables that always credit the active project.</div>
     <div class="chips">
       {#each adobeApps as app (app)}
         <span class="app-chip">

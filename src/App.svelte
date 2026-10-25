@@ -10,6 +10,7 @@
   import Mini from "./lib/components/Mini.svelte";
   import AppInfo from "./lib/components/AppInfo.svelte";
   import Celebration from "./lib/components/Celebration.svelte";
+  import ProjectToolsDialog from "./lib/components/ProjectToolsDialog.svelte";
   import Dashboard from "./lib/pages/Dashboard.svelte";
   import Projects from "./lib/pages/Projects.svelte";
   import Reports from "./lib/pages/Reports.svelte";
@@ -240,6 +241,7 @@
 {#if !isMini}
   <AppInfo />
   <Celebration />
+  <ProjectToolsDialog />
   <Toasts />
 {/if}
 

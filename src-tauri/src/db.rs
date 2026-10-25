@@ -414,6 +414,10 @@ impl Db {
         replace_app_rules(&self.lock(), kind, apps)
     }
 
+    pub fn known_apps(&self) -> Result<Vec<AppTotal>> {
+        known_apps(&self.lock())
+    }
+
     pub fn project_tools(&self, project_id: i64) -> Result<Vec<String>> {
         project_tools_conn(&self.lock(), project_id)
     }
@@ -936,6 +940,46 @@ pub fn sum_range(
         params![start_day, end_day, project_id, unassigned as i64],
         |r| r.get(0),
     )?)
+}
+
+pub fn known_apps(conn: &Connection) -> Result<Vec<AppTotal>> {
+    let mut apps: BTreeMap<String, (i64, bool)> = BTreeMap::new();
+    let mut stmt = conn.prepare(
+        "SELECT app, COALESCE(SUM(ended_at - started_at), 0), MAX(adobe)
+         FROM sessions WHERE ended_at > started_at GROUP BY app",
+    )?;
+    let rows = stmt.query_map([], |r| {
+        Ok((
+            r.get::<_, String>(0)?,
+            r.get::<_, i64>(1)?,
+            r.get::<_, i64>(2)? != 0,
+        ))
+    })?;
+    for row in rows {
+        let (app, seconds, adobe) = row?;
+        let entry = apps.entry(app).or_insert((0, adobe));
+        entry.0 += seconds;
+        entry.1 |= adobe;
+    }
+    for app in get_app_rules_conn(conn, "adobe") {
+        apps.entry(app).or_insert((0, true));
+    }
+    apps.remove("Framewise.exe");
+    apps.remove("framewise.exe");
+    let mut out: Vec<AppTotal> = apps
+        .into_iter()
+        .map(|(app, (seconds, adobe))| AppTotal {
+            app,
+            seconds,
+            adobe,
+        })
+        .collect();
+    out.sort_by(|a, b| {
+        b.seconds
+            .cmp(&a.seconds)
+            .then_with(|| a.app.to_lowercase().cmp(&b.app.to_lowercase()))
+    });
+    Ok(out)
 }
 
 pub fn per_app(
@@ -1643,6 +1687,40 @@ mod tests {
             .unwrap();
         assert_eq!(focused, 3600);
         assert_eq!(unfocused, 1800);
+    }
+
+    #[test]
+    fn known_apps_merge_history_and_adobe_rules() {
+        let conn = test_db();
+        insert_interval(
+            &conn,
+            "chrome.exe",
+            None,
+            ts("2026-10-20", 9, 0),
+            ts("2026-10-20", 10, 0),
+            false,
+            "auto",
+            None,
+        )
+        .unwrap();
+        insert_interval(
+            &conn,
+            "framewise.exe",
+            None,
+            ts("2026-10-20", 10, 0),
+            ts("2026-10-20", 10, 30),
+            false,
+            "auto",
+            None,
+        )
+        .unwrap();
+        replace_app_rules(&conn, "adobe", &["Photoshop.exe".into()]).unwrap();
+        let apps = known_apps(&conn).unwrap();
+        assert!(apps.iter().any(|app| app.app == "chrome.exe"));
+        assert!(apps.iter().any(|app| app.app == "Photoshop.exe"));
+        assert!(!apps
+            .iter()
+            .any(|app| app.app.eq_ignore_ascii_case("framewise.exe")));
     }
 
     #[test]

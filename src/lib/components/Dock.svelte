@@ -14,6 +14,7 @@
     switchProject,
     togglePaused,
     toast,
+    openProjectSetup,
   } from "../stores";
   import { PAGES, commandOpen, navigate, requestNewProject } from "../router";
   import { api, errMessage } from "../api";
@@ -175,7 +176,7 @@
           const project = await api.createProject(name, null, "#7dd3fc");
           await loadBootstrap();
           await switchProject(project.id);
-          toast("Project created.", "success");
+          openProjectSetup(project, true);
         } catch (error) {
           toast(errMessage(error), "error");
         }

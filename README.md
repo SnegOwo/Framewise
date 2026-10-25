@@ -64,9 +64,10 @@ timeline, one heatmap, and reports you can export without an account.
   tracked for general stats, or credited to the project once you give it focus tools.
   No project selected means unassigned, never guessed.
 - **Focus tools.** Give each project its tools — Premiere, Photoshop, Zen, Flameshot,
-  anything. A small green or red bubble on the dashboard tells you whether the app in
-  focus counts, and each project separates selected tools from other time with a focus
-  percentage.
+  anything. Start from a **Montage**, **YouTube video**, **Motion graphics** or
+  **Photo edit** template, or pick from apps already saved in Framewise. A small green
+  or red bubble on the dashboard tells you whether the app in focus counts, and each
+  project separates selected tools from other time with a focus percentage.
 - **A real 24-hour view.** App tracks, session pills and a now cursor, so the day is
   legible at a glance.
 - **Goals that feel finished.** Daily and weekly rings, a contribution heatmap, six
@@ -178,9 +179,12 @@ to see its friendly name, category, executable and, when it is running, the full
 That is how `mpvnet.exe` becomes `mpv.net` with a description.
 
 **Projects.** Name, client, color, archive, delete (confirm only for delete), active
-project, per-project stats. A project detail page has focus tools, a focus percentage,
-selected/other app bars, a 30-day chart and a six-month mini heatmap. Type a name that
-does not match in the dashboard project field and Framewise offers to create it inline.
+project, per-project stats. Creating a project opens a tool picker with Montage,
+YouTube video, Motion graphics and Photo edit templates, plus the apps already saved
+in Framewise; you can skip it and add tools later. A project detail page has focus
+tools, a focus percentage, selected/other app bars, a 30-day chart and a six-month mini
+heatmap. Type a name that does not match in the dashboard project field and Framewise
+offers to create it inline.
 
 **Reports.** This week, last week, this month, 30 days, this year, or a custom range.
 A single project filter and a single export menu. Goal line inside the chart; no
@@ -222,7 +226,7 @@ Checks:
 npm run check          # svelte-check / TypeScript / a11y
 npm run build          # Vite production build
 npm run audit:offline  # fails on any remote asset or endpoint
-cargo test --lib       # 28 backend tests
+cargo test --lib       # 30 backend tests
 cargo check            # backend type check
 ```
 
@@ -260,7 +264,7 @@ src-tauri/
 
 ## Tests
 
-The backend keeps **28 unit tests** covering midnight splitting, multi-day intervals,
+The backend keeps **30 unit tests** covering midnight splitting, multi-day intervals,
 idle cutoff, sleep gap detection, Adobe attribution, focus tools, ignored apps, goal
 progress and streaks, report grouping, CSV escaping and reassignment.
 

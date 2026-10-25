@@ -8,7 +8,10 @@
     boot,
     bumpRefresh,
     loadBootstrap,
+    openProjectSetup,
+    refreshTick,
     status,
+    switchProject,
     toast,
   } from "../stores";
   import { navigate, sessionsProject } from "../router";
@@ -134,13 +137,14 @@
     }
     creating = true;
     try {
-      await api.createProject(newName.trim(), newClient.trim() || null, newColor);
+      const project = await api.createProject(newName.trim(), newClient.trim() || null, newColor);
       await refresh();
       adding = false;
       newName = "";
       newClient = "";
       newColor = palette[0];
-      toast("Project created.", "success");
+      await switchProject(project.id);
+      openProjectSetup(project, true);
     } catch (cause) {
       toast(errMessage(cause), "error");
     } finally {
@@ -279,6 +283,7 @@
   });
 
   $effect(() => {
+    $refreshTick;
     if (detailId != null) void refreshDetail(detailId);
   });
 
@@ -359,9 +364,14 @@
           <div class="eyebrow">Focus tools</div>
           <p class="section-note">Selected apps count as focused while this project is active. Anything else is still tracked, but marked other.</p>
         </div>
-        <button class="chip-add-button" onclick={() => void pickTools()} disabled={toolBusy}>
-          <Icon name="plus" size={13} /> Add .exe
-        </button>
+        <div class="tool-actions">
+          <button class="chip-add-button" onclick={() => detail && openProjectSetup(detail.project)}>
+            Templates
+          </button>
+          <button class="chip-add-button" onclick={() => void pickTools()} disabled={toolBusy}>
+            <Icon name="plus" size={13} /> Add .exe
+          </button>
+        </div>
       </div>
       <div class="tool-chips">
         {#each detail.tools as tool (tool)}
@@ -556,7 +566,7 @@
     {#if activeList.length === 0 && archivedList.length === 0 && !adding}
       <div class="projects-empty">
         <div class="empty-title">No projects yet</div>
-        <div class="empty-sub">Create one and Adobe time can be pointed at it.</div>
+        <div class="empty-sub">Create one, choose the apps that count, and Framewise starts crediting work.</div>
       </div>
     {/if}
 
@@ -596,6 +606,7 @@
             ></button>
           {/each}
         </div>
+        <div class="new-hint">Next you can pick focus tools, or skip and add them later.</div>
         <div class="new-actions">
           <button class="btn btn-primary btn-sm" type="submit" disabled={creating}>
             {creating ? "Creating…" : "Create project"}
@@ -833,6 +844,12 @@
     gap: 8px;
   }
 
+  .new-hint {
+    margin-top: 10px;
+    color: var(--muted-2);
+    font-size: 11.5px;
+  }
+
   .archived-label {
     margin: 8px 0 6px;
   }
@@ -1032,6 +1049,12 @@
     color: var(--muted);
     font-size: 11.5px;
     white-space: nowrap;
+  }
+
+  .tool-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
   }
 
   .chip-add-button:hover {

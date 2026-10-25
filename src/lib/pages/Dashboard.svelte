@@ -15,7 +15,7 @@
     streakDays,
     toast,
   } from "../stores";
-  import { navigate, sessionsDay, sessionsProject } from "../router";
+  import { navigate, requestNewProject, sessionsDay, sessionsProject } from "../router";
   import { appLabel, formatDuration, formatHMS, formatTimestamp, todayStr } from "../format";
   import Icon from "../components/Icon.svelte";
   import Rule from "../components/Rule.svelte";
@@ -178,6 +178,20 @@
       </span>
     </h1>
   </section>
+
+  {#if $boot && $activeProjects.length === 0}
+    <section class="start-card reveal">
+      <span class="start-mark"><Icon name="target" size={20} /></span>
+      <div class="start-copy">
+        <span class="eyebrow">First run</span>
+        <div class="start-title">Make your first project.</div>
+        <p>Name it, choose the apps that count, and Framewise starts crediting work. You can skip tools and add them later.</p>
+      </div>
+      <button class="btn btn-primary start-action" onclick={requestNewProject}>
+        Create a project
+      </button>
+    </section>
+  {/if}
 
   {#if error}
     <div class="inline-error">
@@ -392,6 +406,55 @@
 
   .status-section {
     margin-top: 40px;
+  }
+
+  .start-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 34px;
+    padding: 20px 22px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-large);
+    background:
+      radial-gradient(420px 180px at 100% 0%, var(--accent-soft), transparent 70%),
+      var(--surface);
+  }
+
+  .start-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    border-radius: 13px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+  }
+
+  .start-copy {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .start-title {
+    margin-top: 6px;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .start-copy p {
+    max-width: 540px;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+
+  .start-action {
+    flex: 0 0 auto;
   }
 
   .status-card {
@@ -670,6 +733,15 @@
       flex-direction: column;
       align-items: flex-start;
       gap: 12px;
+    }
+    .start-card {
+      flex-wrap: wrap;
+    }
+    .start-copy {
+      flex-basis: calc(100% - 58px);
+    }
+    .start-action {
+      margin-left: 58px;
     }
   }
 </style>

@@ -242,6 +242,7 @@ pub fn run() {
             commands::get_bootstrap,
             commands::get_status,
             commands::list_projects,
+            commands::list_known_apps,
             commands::create_project,
             commands::update_project,
             commands::set_project_tools,

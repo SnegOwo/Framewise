@@ -155,6 +155,11 @@ pub fn list_projects(
 }
 
 #[tauri::command]
+pub fn list_known_apps(state: State<'_, AppState>) -> Result<Vec<AppTotal>, String> {
+    state.db.known_apps().map_err(e)
+}
+
+#[tauri::command]
 pub fn create_project(
     app: AppHandle,
     state: State<'_, AppState>,

@@ -22,6 +22,16 @@ export function showAppInfo(app: string) {
   appInfo.set(app);
 }
 
+export const projectSetup = writable<{ project: Project; isNew: boolean } | null>(null);
+
+export function openProjectSetup(project: Project, isNew = false) {
+  projectSetup.set({ project, isNew });
+}
+
+export function closeProjectSetup() {
+  projectSetup.set(null);
+}
+
 export const projects = derived(boot, ($boot) => $boot?.projects ?? []);
 export const activeProjects = derived(projects, ($projects) =>
   $projects.filter((project) => !project.archived),
