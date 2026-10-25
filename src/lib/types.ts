@@ -59,6 +59,8 @@ export interface Settings {
   launchAtLogin: boolean;
   notifyGoals: boolean;
   celebrateSound: boolean;
+  goalsFocusOnly: boolean;
+  onboardingComplete: boolean;
   ignoreApps: string[];
   adobeApps: string[];
   dataPath: string;
@@ -82,6 +84,8 @@ export interface Status {
   projectWeekSeconds: number;
   todayByProject: ProjectTotal[];
   weekByProject: ProjectTotal[];
+  todayFocusedByProject: ProjectTotal[];
+  weekFocusedByProject: ProjectTotal[];
   todayByApp: AppTotal[];
   renderActive: boolean;
   activeProjectHasTools: boolean;
@@ -167,6 +171,8 @@ export interface AppSettingsUpdate {
   launchAtLogin?: boolean;
   notifyGoals?: boolean;
   celebrateSound?: boolean;
+  goalsFocusOnly?: boolean;
+  onboardingComplete?: boolean;
 }
 
 export type ToastTone = "neutral" | "success" | "error";

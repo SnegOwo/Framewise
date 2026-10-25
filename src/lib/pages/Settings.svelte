@@ -239,6 +239,26 @@
 
   <section class="group">
     <Rule />
+    <div class="eyebrow group-label">Goals</div>
+
+    <div class="setting-row">
+      <div class="setting-text">
+        <div class="setting-name">Count only focus time</div>
+        <div class="setting-help">
+          Goals count selected focus tools only. Apps without tools still count in full.
+        </div>
+      </div>
+      <button
+        class="toggle"
+        class:on={$boot?.settings.goalsFocusOnly}
+        onclick={() => void saveSettings({ goalsFocusOnly: !$boot?.settings.goalsFocusOnly })}
+        aria-pressed={$boot?.settings.goalsFocusOnly}
+        aria-label="Count only focus time toward goals"
+      >
+        <span class="knob"></span>
+      </button>
+    </div>
+
     <div class="eyebrow group-label">Appearance</div>
 
     <div class="setting-row">

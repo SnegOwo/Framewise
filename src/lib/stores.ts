@@ -55,18 +55,28 @@ export const weeklyGoal = derived(goals, ($goals) =>
   $goals.find((goal) => goal.scope === "global" && goal.period === "weekly"),
 );
 
-export function goalSeconds(goal: Goal, $status: Status | null): number {
+export function goalSeconds(
+  goal: Goal,
+  $status: Status | null,
+  focusOnly = false,
+): number {
   if (!$status) return 0;
   if (goal.period === "daily") {
-    if (goal.scope === "global") return $status.todaySeconds;
-    return (
-      $status.todayByProject.find((row) => row.projectId === goal.projectId)?.seconds ?? 0
-    );
+    if (goal.scope === "global") {
+      return focusOnly
+        ? $status.todayFocusedByProject.reduce((sum, row) => sum + row.seconds, 0)
+        : $status.todaySeconds;
+    }
+    const rows = focusOnly ? $status.todayFocusedByProject : $status.todayByProject;
+    return rows.find((row) => row.projectId === goal.projectId)?.seconds ?? 0;
   }
-  if (goal.scope === "global") return $status.weekSeconds;
-  return (
-    $status.weekByProject.find((row) => row.projectId === goal.projectId)?.seconds ?? 0
-  );
+  if (goal.scope === "global") {
+    return focusOnly
+      ? $status.weekFocusedByProject.reduce((sum, row) => sum + row.seconds, 0)
+      : $status.weekSeconds;
+  }
+  const rows = focusOnly ? $status.weekFocusedByProject : $status.weekByProject;
+  return rows.find((row) => row.projectId === goal.projectId)?.seconds ?? 0;
 }
 
 export function projectSecondsToday(projectId: number, $status: Status | null): number {

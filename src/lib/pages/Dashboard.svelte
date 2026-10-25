@@ -51,8 +51,12 @@
     $status?.trackingSince ? Math.max(0, clock - $status.trackingSince) : 0,
   );
   let target = $derived($dailyGoal?.targetSeconds ?? 0);
-  let percent = $derived(target > 0 ? Math.round((todaySeconds / target) * 100) : 0);
-  let remaining = $derived(Math.max(0, target - todaySeconds));
+  let goalsFocusOnly = $derived($boot?.settings.goalsFocusOnly ?? true);
+  let goalToday = $derived(
+    $dailyGoal ? goalSeconds($dailyGoal, $status, goalsFocusOnly) : 0,
+  );
+  let percent = $derived(target > 0 ? Math.round((goalToday / target) * 100) : 0);
+  let remaining = $derived(Math.max(0, target - goalToday));
 
   let heatProjectId = $derived(
     heatFilter === "all" || heatFilter === "unassigned" ? null : Number(heatFilter),
@@ -68,7 +72,10 @@
       (scope === "global" ? 0 : 10) + (period === "daily" ? 0 : 1);
     return [...$goals]
       .sort((a, b) => rank(a.scope, a.period) - rank(b.scope, b.period))
-      .map((goal) => ({ goal, seconds: goalSeconds(goal, $status) }));
+      .map((goal) => ({
+        goal,
+        seconds: goalSeconds(goal, $status, goalsFocusOnly),
+      }));
   });
 
   async function loadHeat() {

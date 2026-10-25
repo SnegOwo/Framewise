@@ -11,6 +11,7 @@
   import AppInfo from "./lib/components/AppInfo.svelte";
   import Celebration from "./lib/components/Celebration.svelte";
   import ProjectToolsDialog from "./lib/components/ProjectToolsDialog.svelte";
+  import Onboarding from "./lib/components/Onboarding.svelte";
   import Dashboard from "./lib/pages/Dashboard.svelte";
   import Projects from "./lib/pages/Projects.svelte";
   import Reports from "./lib/pages/Reports.svelte";
@@ -63,7 +64,11 @@
     if (!$boot || !$status) return;
     for (const goal of $boot.goals) {
       if (goal.targetSeconds <= 0) continue;
-      const seconds = goalSeconds(goal, $status);
+      const seconds = goalSeconds(
+        goal,
+        $status,
+        $boot.settings.goalsFocusOnly,
+      );
       const done = seconds >= goal.targetSeconds;
       if (done && !reachedGoals.has(goal.id)) {
         reachedGoals.add(goal.id);
@@ -241,6 +246,7 @@
 {#if !isMini}
   <AppInfo />
   <Celebration />
+  <Onboarding />
   <ProjectToolsDialog />
   <Toasts />
 {/if}

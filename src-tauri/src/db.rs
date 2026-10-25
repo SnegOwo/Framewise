@@ -64,6 +64,7 @@ pub struct LiveSlice {
     pub app: String,
     pub project_id: Option<i64>,
     pub adobe: bool,
+    pub focused: Option<bool>,
     pub started_at: i64,
     pub source: String,
 }
@@ -209,7 +210,12 @@ impl Db {
     pub fn goals_progress(&self, today: &str) -> Result<Vec<GoalProgress>> {
         let conn = self.lock();
         let goals = list_goals(&conn)?;
-        progress_for_goals(&conn, &goals, today)
+        progress_for_goals(
+            &conn,
+            &goals,
+            today,
+            setting_bool(&conn, "goals_focus_only", true),
+        )
     }
 
     pub fn create_goal(
@@ -302,6 +308,10 @@ impl Db {
 
     pub fn list_sessions(&self, filter: &SessionFilter) -> Result<Vec<Session>> {
         list_sessions(&self.lock(), filter)
+    }
+
+    pub fn focus_per_day(&self, start_day: &str, end_day: &str) -> Result<Vec<DayTotal>> {
+        focus_per_day(&self.lock(), start_day, end_day)
     }
 
     pub fn report(
@@ -495,6 +505,8 @@ pub struct StatusTotals {
     pub week_seconds: i64,
     pub today_by_project: Vec<ProjectTotal>,
     pub week_by_project: Vec<ProjectTotal>,
+    pub today_focused_by_project: Vec<ProjectTotal>,
+    pub week_focused_by_project: Vec<ProjectTotal>,
     pub today_by_app: Vec<AppTotal>,
 }
 
@@ -618,6 +630,8 @@ fn seed(conn: &Connection) -> Result<()> {
             ("launch_at_login", "false".to_string()),
             ("notify_goals", "true".to_string()),
             ("celebrate_sound", "true".to_string()),
+            ("goals_focus_only", "true".to_string()),
+            ("onboarding_complete", "false".to_string()),
             ("seeded", "1".to_string()),
         ] {
             set_setting(&tx, k, &v)?;
@@ -686,6 +700,8 @@ pub fn read_settings(conn: &Connection, data_path: &str, version: &str) -> Resul
         launch_at_login: setting_bool(conn, "launch_at_login", false),
         notify_goals: setting_bool(conn, "notify_goals", true),
         celebrate_sound: setting_bool(conn, "celebrate_sound", true),
+        goals_focus_only: setting_bool(conn, "goals_focus_only", true),
+        onboarding_complete: setting_bool(conn, "onboarding_complete", false),
         ignore_apps: get_app_rules_conn(conn, "ignore"),
         adobe_apps: get_app_rules_conn(conn, "adobe"),
         data_path: data_path.to_string(),
@@ -942,6 +958,26 @@ pub fn sum_range(
     )?)
 }
 
+pub fn sum_range_focus(
+    conn: &Connection,
+    start_day: &str,
+    end_day: &str,
+    project_id: Option<i64>,
+    unassigned: bool,
+) -> Result<i64> {
+    let sql = format!(
+        "SELECT COALESCE(SUM(ended_at - started_at),0) FROM sessions
+         WHERE ended_at > started_at AND COALESCE(in_tools, 1) = 1
+           AND day BETWEEN ?1 AND ?2 {}",
+        project_filter_sql()
+    );
+    Ok(conn.query_row(
+        &sql,
+        params![start_day, end_day, project_id, unassigned as i64],
+        |r| r.get(0),
+    )?)
+}
+
 pub fn known_apps(conn: &Connection) -> Result<Vec<AppTotal>> {
     let mut apps: BTreeMap<String, (i64, bool)> = BTreeMap::new();
     let mut stmt = conn.prepare(
@@ -1116,6 +1152,22 @@ pub fn per_day(
     Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
 }
 
+pub fn focus_per_day(conn: &Connection, start_day: &str, end_day: &str) -> Result<Vec<DayTotal>> {
+    let mut stmt = conn.prepare(
+        "SELECT day, SUM(ended_at - started_at) AS secs FROM sessions
+         WHERE ended_at > started_at AND COALESCE(in_tools, 1) = 1
+           AND day BETWEEN ?1 AND ?2
+         GROUP BY day ORDER BY day",
+    )?;
+    let rows = stmt.query_map(params![start_day, end_day], |r| {
+        Ok(DayTotal {
+            day: r.get(0)?,
+            seconds: r.get(1)?,
+        })
+    })?;
+    Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+}
+
 fn report_for_range(
     conn: &Connection,
     start_day: &str,
@@ -1143,7 +1195,12 @@ fn report_for_range(
             params![start_day, end_day, project_id, unassigned as i64],
             |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
         )?;
-    let goals = progress_for_goals(conn, &list_goals(conn)?, &today_str())?;
+    let goals = progress_for_goals(
+        conn,
+        &list_goals(conn)?,
+        &today_str(),
+        setting_bool(conn, "goals_focus_only", true),
+    )?;
     Ok(Report {
         start_day: start_day.to_string(),
         end_day: end_day.to_string(),
@@ -1282,6 +1339,74 @@ pub fn status_totals(
         }
     }
 
+    // Focused totals use COALESCE(in_tools, 1): sessions without a focus
+    // classification (no tools configured, or legacy data) count as good time.
+    let mut today_focus: BTreeMap<Option<i64>, i64> = BTreeMap::new();
+    let mut week_focus: BTreeMap<Option<i64>, i64> = BTreeMap::new();
+    if ids.is_empty() {
+        let mut stmt = conn.prepare(
+            "SELECT project_id, SUM(ended_at - started_at) FROM sessions
+             WHERE ended_at > started_at AND day = ?1 AND COALESCE(in_tools, 1) = 1
+             GROUP BY project_id",
+        )?;
+        let rows = stmt.query_map(params![today], |r| {
+            Ok((r.get::<_, Option<i64>>(0)?, r.get::<_, i64>(1)?))
+        })?;
+        for row in rows {
+            let (pid, secs) = row?;
+            *today_focus.entry(pid).or_insert(0) += secs;
+        }
+        let mut stmt = conn.prepare(
+            "SELECT project_id, SUM(ended_at - started_at) FROM sessions
+             WHERE ended_at > started_at AND day BETWEEN ?1 AND ?2 AND COALESCE(in_tools, 1) = 1
+             GROUP BY project_id",
+        )?;
+        let rows = stmt.query_map(params![week_start, week_end], |r| {
+            Ok((r.get::<_, Option<i64>>(0)?, r.get::<_, i64>(1)?))
+        })?;
+        for row in rows {
+            let (pid, secs) = row?;
+            *week_focus.entry(pid).or_insert(0) += secs;
+        }
+    } else {
+        let sql_today = format!(
+            "SELECT project_id, SUM(ended_at - started_at) FROM sessions
+             WHERE ended_at > started_at AND day = ?1
+               AND COALESCE(in_tools, 1) = 1 AND id NOT IN ({placeholders})
+             GROUP BY project_id"
+        );
+        let mut today_values: Vec<rusqlite::types::Value> =
+            vec![rusqlite::types::Value::Text(today.to_string())];
+        today_values.extend(ids.iter().map(|id| (*id).into()));
+        let mut stmt = conn.prepare(&sql_today)?;
+        let rows = stmt.query_map(rusqlite::params_from_iter(today_values), |r| {
+            Ok((r.get::<_, Option<i64>>(0)?, r.get::<_, i64>(1)?))
+        })?;
+        for row in rows {
+            let (pid, secs) = row?;
+            *today_focus.entry(pid).or_insert(0) += secs;
+        }
+        let sql = format!(
+            "SELECT project_id, SUM(ended_at - started_at) FROM sessions
+             WHERE ended_at > started_at AND day BETWEEN ?1 AND ?2
+               AND COALESCE(in_tools, 1) = 1 AND id NOT IN ({placeholders})
+             GROUP BY project_id"
+        );
+        let mut values: Vec<rusqlite::types::Value> = vec![
+            rusqlite::types::Value::Text(week_start.to_string()),
+            rusqlite::types::Value::Text(week_end.to_string()),
+        ];
+        values.extend(ids.iter().map(|id| (*id).into()));
+        let mut stmt = conn.prepare(&sql)?;
+        let rows = stmt.query_map(rusqlite::params_from_iter(values), |r| {
+            Ok((r.get::<_, Option<i64>>(0)?, r.get::<_, i64>(1)?))
+        })?;
+        for row in rows {
+            let (pid, secs) = row?;
+            *week_focus.entry(pid).or_insert(0) += secs;
+        }
+    }
+
     // Add live slivers exactly once.
     for live in live {
         if live.started_at > now {
@@ -1306,6 +1431,14 @@ pub fn status_totals(
             out.week_seconds += secs;
             *week_projects.entry(live.project_id).or_insert(0) += secs;
         }
+        if live.focused != Some(false) {
+            if in_today {
+                *today_focus.entry(live.project_id).or_insert(0) += secs;
+            }
+            if in_week {
+                *week_focus.entry(live.project_id).or_insert(0) += secs;
+            }
+        }
         if live.source == "render" {
             // Render slivers are additive project time; keep app totals honest.
             let _ = live;
@@ -1313,6 +1446,32 @@ pub fn status_totals(
     }
 
     let names = project_names(conn)?;
+    out.today_focused_by_project = today_focus
+        .into_iter()
+        .filter(|(_, s)| *s > 0)
+        .map(|(pid, seconds)| ProjectTotal {
+            project_id: pid,
+            name: pid
+                .and_then(|id| names.get(&id).cloned())
+                .unwrap_or_else(|| "Unassigned".into()),
+            seconds,
+        })
+        .collect();
+    out.today_focused_by_project
+        .sort_by_key(|item| std::cmp::Reverse(item.seconds));
+    out.week_focused_by_project = week_focus
+        .into_iter()
+        .filter(|(_, s)| *s > 0)
+        .map(|(pid, seconds)| ProjectTotal {
+            project_id: pid,
+            name: pid
+                .and_then(|id| names.get(&id).cloned())
+                .unwrap_or_else(|| "Unassigned".into()),
+            seconds,
+        })
+        .collect();
+    out.week_focused_by_project
+        .sort_by_key(|item| std::cmp::Reverse(item.seconds));
     out.today_by_app = today_apps
         .into_iter()
         .filter(|(_, (s, _))| *s > 0)
@@ -1492,6 +1651,7 @@ pub fn progress_for_goals(
     conn: &Connection,
     goals: &[Goal],
     today: &str,
+    focus_only: bool,
 ) -> Result<Vec<GoalProgress>> {
     let (week_start, week_end) = week_bounds(today);
     let mut out = Vec::new();
@@ -1505,7 +1665,11 @@ pub fn progress_for_goals(
         } else {
             (today.to_string(), today.to_string(), today.to_string())
         };
-        let seconds = sum_range(conn, &start, &end, goal.project_id, false)?;
+        let seconds = if focus_only {
+            sum_range_focus(conn, &start, &end, goal.project_id, false)?
+        } else {
+            sum_range(conn, &start, &end, goal.project_id, false)?
+        };
         let target = goal.target_seconds.max(1);
         out.push(GoalProgress {
             goal: goal.clone(),
@@ -1824,13 +1988,54 @@ mod tests {
             None,
         )
         .unwrap();
-        let progress = progress_for_goals(&conn, &goals, "2026-10-24").unwrap();
+        let progress = progress_for_goals(&conn, &goals, "2026-10-24", false).unwrap();
         assert_eq!(progress[0].seconds, 0);
         assert!(!progress[0].reached);
         assert_eq!(progress[1].seconds, 7 * 3600);
         assert_eq!(progress[1].start_day, "2026-10-19");
         assert_eq!(progress[1].end_day, "2026-10-25");
         assert!((progress[1].percent - 35.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn focus_only_goals_skip_other_app_time() {
+        let conn = test_db();
+        let p = project(&conn, "Focus goal");
+        insert_interval(
+            &conn,
+            "Photoshop.exe",
+            Some(p),
+            ts("2026-10-24", 9, 0),
+            ts("2026-10-24", 10, 0),
+            true,
+            "auto",
+            Some(true),
+        )
+        .unwrap();
+        insert_interval(
+            &conn,
+            "chrome.exe",
+            Some(p),
+            ts("2026-10-24", 10, 0),
+            ts("2026-10-24", 19, 0),
+            false,
+            "auto",
+            Some(false),
+        )
+        .unwrap();
+        let goals = vec![Goal {
+            id: 1,
+            scope: "project".into(),
+            project_id: Some(p),
+            project_name: Some("Focus goal".into()),
+            period: "daily".into(),
+            target_seconds: 4 * 3600,
+            created_at: 0,
+        }];
+        let focused = progress_for_goals(&conn, &goals, "2026-10-24", true).unwrap();
+        assert_eq!(focused[0].seconds, 3600);
+        let total = progress_for_goals(&conn, &goals, "2026-10-24", false).unwrap();
+        assert_eq!(total[0].seconds, 10 * 3600);
     }
 
     #[test]
@@ -1862,6 +2067,7 @@ mod tests {
             app: "Photoshop.exe".into(),
             project_id: None,
             adobe: true,
+            focused: None,
             started_at: ts("2026-10-24", 10, 0),
             source: "auto".into(),
         }];
@@ -1870,6 +2076,46 @@ mod tests {
             status_totals(&conn, "2026-10-24", "2026-10-19", "2026-10-25", &live, now).unwrap();
         assert_eq!(totals.today_seconds, 5400);
         assert_eq!(totals.today_by_app[0].seconds, 5400);
+    }
+
+    #[test]
+    fn status_splits_focused_and_other_time() {
+        let conn = test_db();
+        let p = project(&conn, "Focus status");
+        insert_interval(
+            &conn,
+            "Photoshop.exe",
+            Some(p),
+            ts("2026-10-24", 9, 0),
+            ts("2026-10-24", 10, 0),
+            true,
+            "auto",
+            Some(true),
+        )
+        .unwrap();
+        insert_interval(
+            &conn,
+            "chrome.exe",
+            Some(p),
+            ts("2026-10-24", 10, 0),
+            ts("2026-10-24", 19, 0),
+            false,
+            "auto",
+            Some(false),
+        )
+        .unwrap();
+        let now = ts("2026-10-24", 20, 0);
+        let totals =
+            status_totals(&conn, "2026-10-24", "2026-10-19", "2026-10-25", &[], now).unwrap();
+        assert_eq!(totals.today_seconds, 10 * 3600);
+        assert_eq!(
+            totals
+                .today_focused_by_project
+                .iter()
+                .find(|row| row.project_id == Some(p))
+                .map(|row| row.seconds),
+            Some(3600)
+        );
     }
 
     #[test]

@@ -132,7 +132,8 @@
           </div>
           <h3>First run</h3>
           <ol class="docs-list">
-            <li>Run <code>framewise.exe</code>. Framewise opens the dashboard and sits in the tray.</li>
+            <li>Run <code>framewise.exe</code>. A short welcome setup asks how you want Framewise to work — theme, goal counting, notifications and launch at login. Use <strong>Skip — use defaults</strong> if you prefer.</li>
+            <li>Framewise opens the dashboard and sits in the tray.</li>
             <li>Open the project chip in the hero and pick a project, or type a new name.</li>
             <li>When the project is created, choose its focus tools from a template or the apps already saved in Framewise. Skip if you want to decide later.</li>
             <li>Work in an Adobe app. Time is credited to the selected project automatically.</li>
@@ -240,7 +241,7 @@
             <li><strong>Hero sentence.</strong> Today's total and the active project. The project chip is editable.</li>
             <li><strong>Status card.</strong> Current app, live timer, and the green/red focus bubble when the project has tools.</li>
             <li><strong>Timeline.</strong> One track per app with session pills and a now cursor. Click an app name to inspect it.</li>
-            <li><strong>Goals.</strong> Daily or weekly targets. Completion plays the optional time-bloom reward.</li>
+            <li><strong>Goals.</strong> Daily or weekly targets. By default only selected focus tools count; projects without tools count in full. Completion plays the optional time-bloom reward.</li>
             <li><strong>Heatmap.</strong> A year of activity. Click a day to open its sessions.</li>
           </ul>
         </section>
@@ -291,6 +292,7 @@
                 <tr><td>Idle timeout</td><td>How long without input before the clock pauses. Default 3 minutes.</td></tr>
                 <tr><td>Background renders</td><td>Counts Media Encoder time while no Adobe app is focused.</td></tr>
                 <tr><td>Goal notifications</td><td>One local notification when a goal is reached.</td></tr>
+                <tr><td>Count only focus time</td><td>Goals count selected focus tools; other app time still appears in reports.</td></tr>
                 <tr><td>Launch at login</td><td>Starts Framewise when you sign in. Off by default.</td></tr>
                 <tr><td>Theme</td><td>Dark, light or follow Windows.</td></tr>
                 <tr><td>Date format</td><td>English dates or the system format.</td></tr>
@@ -366,6 +368,13 @@ cargo check</code></pre>
           </p>
           <h3>Does Framewise work offline?</h3>
           <p>Yes. The app makes no network requests at all. The website is separate.</p>
+          <h3>Which time counts toward a goal?</h3>
+          <p>
+            By default, only selected focus tools count. If you open a project with 100
+            minutes but only 10 minutes are in its tools, the goal gets 10 minutes. Turn
+            <strong>Count only focus time</strong> off in Settings to count all tracked
+            project time instead. Projects without tools always count in full.
+          </p>
           <h3>Is there an installer?</h3>
           <p>Not yet. The 1.0 release candidate is the portable folder.</p>
         </section>

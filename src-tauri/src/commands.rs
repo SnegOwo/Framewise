@@ -83,6 +83,8 @@ fn build_status(state: &AppState) -> Result<Status, String> {
         project_week_seconds: project_week,
         today_by_project: totals.today_by_project,
         week_by_project: totals.week_by_project,
+        today_focused_by_project: totals.today_focused_by_project,
+        week_focused_by_project: totals.week_focused_by_project,
         today_by_app: totals.today_by_app,
         render_active,
         active_project_has_tools,
@@ -108,9 +110,21 @@ fn streak_days(state: &AppState, today: &str) -> i64 {
         return 0;
     }
     let start = shift_day(today, -366);
-    let per_day = match state.db.report(&start, today, None, false) {
-        Ok(r) => r.per_day,
-        Err(_) => return 0,
+    let focus_only = state
+        .db
+        .setting("goals_focus_only")
+        .map(|value| value == "true")
+        .unwrap_or(true);
+    let per_day = if focus_only {
+        match state.db.focus_per_day(&start, today) {
+            Ok(days) => days,
+            Err(_) => return 0,
+        }
+    } else {
+        match state.db.report(&start, today, None, false) {
+            Ok(r) => r.per_day,
+            Err(_) => return 0,
+        }
     };
     let map: BTreeMap<String, i64> = per_day.into_iter().map(|d| (d.day, d.seconds)).collect();
     goals::current_streak(&map, today, target)
@@ -303,6 +317,18 @@ pub fn update_settings(
         state
             .db
             .set_setting("celebrate_sound", if v { "true" } else { "false" })
+            .map_err(e)?;
+    }
+    if let Some(v) = update.goals_focus_only {
+        state
+            .db
+            .set_setting("goals_focus_only", if v { "true" } else { "false" })
+            .map_err(e)?;
+    }
+    if let Some(v) = update.onboarding_complete {
+        state
+            .db
+            .set_setting("onboarding_complete", if v { "true" } else { "false" })
             .map_err(e)?;
     }
     if let Some(v) = update.launch_at_login {

@@ -91,6 +91,7 @@ impl Tracker {
                 app: c.app.clone(),
                 project_id: c.project_id,
                 adobe: c.adobe,
+                focused: c.focused,
                 started_at: c.started_at,
                 source: c.source.clone(),
             });
@@ -101,6 +102,7 @@ impl Tracker {
                 app: r.app.clone(),
                 project_id: r.project_id,
                 adobe: r.adobe,
+                focused: r.focused,
                 started_at: r.started_at,
                 source: r.source.clone(),
             });
