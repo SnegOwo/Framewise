@@ -32,6 +32,8 @@ the `/Framewise/` project path.
 - There is no waitlist or form. The closing section is a static release note.
 - `docs.html` is the documentation page, with a sticky section index and the same
   theme toggle as the landing page.
+- `assets/framewise-loop.gif` is the 11.8-second README/site demo loop. It is also
+  referenced from the repository README.
 - The launch film is `assets/trailer.mp4` (26.6 s, 1080p) with a poster in
   `assets/trailer-poster.jpg`. It only loads when played.
 - The hero preview tabs auto-advance after a short settle; quick clicks do not reset

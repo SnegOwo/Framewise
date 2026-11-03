@@ -1226,6 +1226,21 @@ html.light .screen-card:hover {
   gap: 12px;
 }
 
+.loop-frame {
+  max-width: 880px;
+  margin: 0 auto 24px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #070707;
+}
+
+.loop-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .step {
   position: relative;
   overflow: hidden;

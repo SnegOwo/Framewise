@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/dark-1200x840-dashboard.png" width="100%" alt="Framewise dashboard: 5h 28m today on YouTube Client 2, a 24-hour timeline, four stat tiles and a 294-hour heatmap" />
+  <img src="site/assets/framewise-loop.gif" width="100%" alt="Loop showing Framewise: pick a project, choose focus tools, review logged sessions and read weekly reports" />
 </p>
 
 Framewise follows the app in focus and credits Premiere, After Effects and Photoshop
