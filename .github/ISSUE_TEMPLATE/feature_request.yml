@@ -1,0 +1,42 @@
+name: Feature request
+description: Suggest an improvement or a new capability.
+title: ""
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, skim the [docs](https://snegowo.github.io/Framewise/docs.html) — some ideas are already there.
+
+        Framewise is offline and local by design. Requests that add accounts, telemetry or network dependencies won't fit the project.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation, not just the solution.
+      placeholder: "When I… it's hard to tell whether…"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Your idea, if you have one
+      description: Optional. Sketches, examples or prior art are welcome.
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Tracking and attribution
+        - Projects and focus tools
+        - Goals and reports
+        - Sessions
+        - Tray / mini timer
+        - Settings
+        - Install / portable / updates
+        - Website or docs
+        - Other
+    validations:
+      required: true

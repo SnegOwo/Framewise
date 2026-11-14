@@ -22,6 +22,10 @@
 </p>
 
 <p align="center">
+  If Framewise is useful to you, <a href="https://github.com/SnegOwo/Framewise/stargazers">a star</a> helps other creatives find it.
+</p>
+
+<p align="center">
   <img src="site/assets/framewise-loop.gif" width="100%" alt="Loop showing Framewise: pick a project, choose focus tools, review logged sessions and read weekly reports" />
 </p>
 
@@ -49,6 +53,7 @@ your machine, and stays out of the edit.
 - [Architecture](#architecture)
 - [Tests](#tests)
 - [Contributing](#contributing)
+- [Star History](#star-history)
 - [Security](#security)
 - [License](#license)
 
@@ -299,6 +304,16 @@ Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 
 The short version: keep the app offline and local, never add telemetry or remote
 assets, keep the tracking behaviour covered by tests, and run the checks before a PR.
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=snegowo%2Fframewise&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=snegowo/framewise&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=snegowo/framewise&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=snegowo/framewise&type=date&legend=top-left" />
+ </picture>
+</a>
 
 ## Security
 

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Docs and guide
+    url: https://snegowo.github.io/Framewise/docs.html
+    about: Setup, attribution rules, goals, reports and portable mode.
+  - name: Report a security issue privately
+    url: https://github.com/SnegOwo/Framewise/blob/main/SECURITY.md
+    about: Do not open a public issue for security problems. See SECURITY.md.

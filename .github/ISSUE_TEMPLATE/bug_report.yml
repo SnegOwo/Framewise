@@ -1,0 +1,53 @@
+name: Bug report
+description: Something is broken or behaving unexpectedly.
+title: ""
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Framewise is a quiet, offline app — the more precise the report, the faster the fix.
+
+        **Do not report security issues here.** See [SECURITY.md](../SECURITY.md) instead.
+  - type: input
+    id: version
+    attributes:
+      label: Framewise version and build
+      description: From Settings → About (e.g. 1.0.5, installer or portable).
+      placeholder: "1.0.5 · portable"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: Win+R → winver, or Settings → System → About.
+      placeholder: "Windows 11 24H2"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, what actually happened.
+      placeholder: |
+        I started tracking a project in Premiere, switched to DuckDuckGo for 30 seconds, and…
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Framewise
+        2. …
+        3. …
+    validations:
+      required: false
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Screenshots, exported reports, error messages. Note that Framewise stores data locally — attaching your SQLite file is never required.
+    validations:
+      required: false
