@@ -1101,6 +1101,37 @@ html.light .feature:hover {
   line-height: 1.55;
 }
 
+.feature-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 15px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.feature-note strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.feature-note-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
 /* ------------------------------------------------------------------ */
 /* Screens                                                             */
 /* ------------------------------------------------------------------ */

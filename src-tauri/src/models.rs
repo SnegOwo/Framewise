@@ -91,6 +91,7 @@ pub struct DetectedApp {
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub theme: String,
+    pub auto_pause_idle: bool,
     pub idle_minutes: u32,
     pub paused: bool,
     pub active_project_id: Option<i64>,
@@ -210,6 +211,7 @@ pub struct ProjectAppTotal {
 #[serde(rename_all = "camelCase")]
 pub struct AppSettingsUpdate {
     pub theme: Option<String>,
+    pub auto_pause_idle: Option<bool>,
     pub idle_minutes: Option<u32>,
     pub count_media_encoder_background: Option<bool>,
     pub launch_at_login: Option<bool>,

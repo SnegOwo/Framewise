@@ -11,6 +11,7 @@ use crate::goals;
 use crate::models::*;
 use crate::state::{AppState, VERSION};
 use crate::timeutil::{shift_day, today_str, week_bounds};
+use crate::tracker::should_pause_for_idle;
 use crate::tray;
 
 fn e(err: impl std::fmt::Display) -> String {
@@ -53,7 +54,7 @@ fn build_status(state: &AppState) -> Result<Status, String> {
         })
         .unwrap_or(0);
     let inner = state.tracker.lock();
-    let idle = inner.idle_seconds >= cfg.idle_seconds;
+    let idle = should_pause_for_idle(cfg.auto_pause_idle, inner.idle_seconds, cfg.idle_seconds);
     let idle_seconds = inner.idle_seconds;
     let paused = cfg.paused;
     let locked = inner.locked;
@@ -303,6 +304,12 @@ pub fn update_settings(
         state
             .db
             .set_setting("idle_minutes", &idle.to_string())
+            .map_err(e)?;
+    }
+    if let Some(v) = update.auto_pause_idle {
+        state
+            .db
+            .set_setting("auto_pause_idle", if v { "true" } else { "false" })
             .map_err(e)?;
     }
     if let Some(v) = update.count_media_encoder_background {

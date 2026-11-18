@@ -57,6 +57,7 @@ export interface GoalProgress {
 
 export interface Settings {
   theme: "dark" | "light" | "system";
+  autoPauseIdle: boolean;
   idleMinutes: number;
   paused: boolean;
   activeProjectId: number | null;
@@ -172,6 +173,7 @@ export interface ProjectDetail {
 
 export interface AppSettingsUpdate {
   theme?: "dark" | "light" | "system";
+  autoPauseIdle?: boolean;
   idleMinutes?: number;
   countMediaEncoderBackground?: boolean;
   launchAtLogin?: boolean;

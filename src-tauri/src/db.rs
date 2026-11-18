@@ -124,6 +124,7 @@ impl Db {
         });
         Ok(RuntimeConfig {
             paused: setting_bool(&conn, "paused", false),
+            auto_pause_idle: setting_bool(&conn, "auto_pause_idle", true),
             idle_seconds: setting_i64(&conn, "idle_minutes")
                 .unwrap_or(3)
                 .clamp(1, 180)
@@ -489,6 +490,7 @@ impl Db {
 #[derive(Debug, Clone)]
 pub struct RuntimeConfig {
     pub paused: bool,
+    pub auto_pause_idle: bool,
     pub idle_seconds: i64,
     pub active_project_id: Option<i64>,
     pub active_project_name: Option<String>,
@@ -623,6 +625,7 @@ fn seed(conn: &Connection) -> Result<()> {
         }
         for (k, v) in [
             ("theme", "dark".to_string()),
+            ("auto_pause_idle", "true".to_string()),
             ("idle_minutes", "3".to_string()),
             ("paused", "false".to_string()),
             ("active_project_id", "".to_string()),
@@ -694,6 +697,7 @@ pub fn read_settings(conn: &Connection, data_path: &str, version: &str) -> Resul
     let active_project_id = setting_i64(conn, "active_project_id");
     Ok(Settings {
         theme: get_setting(conn, "theme").unwrap_or_else(|| "dark".into()),
+        auto_pause_idle: setting_bool(conn, "auto_pause_idle", true),
         idle_minutes: setting_i64(conn, "idle_minutes").unwrap_or(3).clamp(1, 180) as u32,
         paused: setting_bool(conn, "paused", false),
         active_project_id,

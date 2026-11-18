@@ -175,7 +175,7 @@ fn tick(app: &AppHandle) {
         return;
     }
 
-    if idle_seconds >= cfg.idle_seconds {
+    if should_pause_for_idle(cfg.auto_pause_idle, idle_seconds, cfg.idle_seconds) {
         // Only count up to the last real input, so idle minutes are never billed.
         if let Some(c) = inner.current.take() {
             let end = idle_cutoff(now, idle_ms, cfg.idle_seconds, c.started_at);
@@ -483,6 +483,13 @@ pub fn idle_cutoff(now: i64, idle_ms: u64, _timeout_secs: i64, segment_start: i6
     last_input.clamp(segment_start, now)
 }
 
+/// The opt-in away detection pauses the clock once the system reports no
+/// cursor or keyboard input for the configured timeout. Disabling the setting
+/// keeps the same sampling but never cuts a session short.
+pub fn should_pause_for_idle(enabled: bool, idle_seconds: i64, timeout_seconds: i64) -> bool {
+    enabled && idle_seconds >= timeout_seconds
+}
+
 pub fn gap_resets(gap_ms: u64) -> bool {
     gap_ms > SLEEP_GAP_MS
 }
@@ -637,6 +644,14 @@ mod tests {
         assert!(end >= seg_start);
         // Idle longer than the segment: clamp to segment start.
         assert_eq!(idle_cutoff(now, 60 * 60 * 1000, 180, seg_start), seg_start);
+    }
+
+    #[test]
+    fn away_detection_respects_the_toggle() {
+        assert!(should_pause_for_idle(true, 180, 180));
+        assert!(should_pause_for_idle(true, 3_600, 180));
+        assert!(!should_pause_for_idle(true, 179, 180));
+        assert!(!should_pause_for_idle(false, 3_600, 180));
     }
 
     #[test]

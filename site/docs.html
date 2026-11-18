@@ -236,11 +236,14 @@
           </ul>
           <h3>Pauses, idle and sleep</h3>
           <p>
-            Idle, lock, sleep and hibernation stop the clock. Idle time is cut back to the
-            last real input, so idle minutes are never billed. A sleep gap is not bridged
-            with phantom time. Sessions split automatically at midnight and when the app,
-            project or focus state changes. Opening Framewise does not create a gap — its
-            own window is never counted, so the last real app keeps the session open.
+            Framewise asks on first run whether it should pause when you step away. With it
+            on, after 3 minutes without cursor or keyboard activity the clock stops; the next
+            movement starts a fresh session, so the idle gap is never billed. The timeout and
+            the whole behavior can be changed in Settings. Lock, sleep and hibernation always
+            stop the clock, and a sleep gap is not bridged with phantom time. Sessions split
+            automatically at midnight and when the app, project or focus state changes. Opening
+            Framewise does not create a gap — its own window is never counted, so the last real
+            app keeps the session open.
           </p>
         </section>
 
@@ -301,7 +304,8 @@
             <table class="doc-table">
               <thead><tr><th>Setting</th><th>What it does</th></tr></thead>
               <tbody>
-                <tr><td>Idle timeout</td><td>How long without input before the clock pauses. Default 3 minutes.</td></tr>
+                <tr><td>Pause when I step away</td><td>Pauses after no cursor or keyboard activity and resumes when you move again. Asked during setup; default on.</td></tr>
+                <tr><td>Away timeout</td><td>How long without cursor or keyboard activity before the clock pauses. Default 3 minutes.</td></tr>
                 <tr><td>Background renders</td><td>Counts Media Encoder time while no Adobe app is focused.</td></tr>
                 <tr><td>Goal notifications</td><td>One local notification when a goal is reached.</td></tr>
                 <tr><td>Count only focus time</td><td>Goals count selected focus tools; other app time still appears in reports.</td></tr>
@@ -410,7 +414,9 @@ cargo check</code></pre>
           <h3>Nothing is tracking</h3>
           <p>
             Check that the app is not in the ignore list, that the session is not paused, and
-            that Windows is not idle or locked. Ignored apps are never recorded.
+            that Windows is not idle or locked. Ignored apps are never recorded. If the clock
+            pauses whenever you stop moving, turn off <strong>Pause when I step away</strong>
+            in Settings, or raise the away timeout.
           </p>
           <h3>The focus bubble is always red</h3>
           <p>

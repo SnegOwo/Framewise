@@ -189,9 +189,11 @@ report a focus percentage. Projects without tools keep non-Adobe time unassigned
 Framewise's own windows are never credited; while Framewise is in focus it keeps the
 most recently used real app's session alive, so opening the app does not create a gap.
 
-**Pausing.** Idle, lock, sleep and hibernation stop the clock. Idle time is cut back
-to the last real input, so idle minutes are never billed. A sleep gap is never
-bridged with phantom time.
+**Pausing.** Inactivity, lock, sleep and hibernation stop the clock. Framewise asks on
+first launch whether it should pause when you step away: after 3 minutes without cursor
+or keyboard activity the timer stops, and the next movement resumes it. The timeout and
+the whole behavior can be changed in Settings. Idle time is cut back to the last real
+input, so idle minutes are never billed. A sleep gap is never bridged with phantom time.
 
 **Goals.** A new install starts with **no goals** — no surprise 4-hour target. Create
 daily or weekly goals from the dashboard; rings grow on first view only and the value
@@ -223,10 +225,10 @@ overlapping labels.
 **Sessions.** Grouped by day with sticky headings. Reassign a session's project
 inline, edit or delete on hover, or add a manual session from the dock.
 
-**Settings.** Autosaving rows, a stepper for idle timeout, segmented theme and date
-format controls, native `.exe` pickers for the Adobe and ignore lists, a scan for
-installed Adobe apps, a sound toggle, and a switch for counting only focus time toward
-goals.
+**Settings.** Autosaving rows, a step-away pause toggle with a timeout stepper,
+segmented theme and date format controls, native `.exe` pickers for the Adobe and ignore
+lists, a scan for installed Adobe apps, a sound toggle, and a switch for counting only
+focus time toward goals.
 
 **Theme.** Dark and light with a circular reveal from the top-right. Motion is
 transform/opacity only and respects `prefers-reduced-motion`.

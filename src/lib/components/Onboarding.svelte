@@ -9,6 +9,7 @@
   import type { DetectedApp } from "../types";
 
   let theme = $state<ThemeSetting>("dark");
+  let autoPauseIdle = $state(true);
   let focusGoals = $state(true);
   let notifyGoals = $state(true);
   let celebrateSound = $state(true);
@@ -29,6 +30,7 @@
     const settings = $boot?.settings;
     if (!settings || initialized) return;
     theme = settings.theme as ThemeSetting;
+    autoPauseIdle = settings.autoPauseIdle;
     focusGoals = settings.goalsFocusOnly;
     notifyGoals = settings.notifyGoals;
     celebrateSound = settings.celebrateSound;
@@ -110,6 +112,7 @@
           : {
               onboardingComplete: true,
               theme,
+              autoPauseIdle,
               goalsFocusOnly: focusGoals,
               notifyGoals,
               celebrateSound,
@@ -154,6 +157,25 @@
         value={theme}
         onchange={(value) => (theme = value as ThemeSetting)}
       />
+    </div>
+
+    <div class="option">
+      <div class="option-text">
+        <div class="option-name">Pause when I step away</div>
+        <div class="option-help">
+          After 3 minutes without cursor or keyboard activity the timer pauses, then
+          resumes when you move again. Change the timeout later in Settings.
+        </div>
+      </div>
+      <button
+        class="toggle"
+        class:on={autoPauseIdle}
+        onclick={() => (autoPauseIdle = !autoPauseIdle)}
+        aria-pressed={autoPauseIdle}
+        aria-label="Pause when I step away"
+      >
+        <span class="knob"></span>
+      </button>
     </div>
 
     <div class="adobe-block">

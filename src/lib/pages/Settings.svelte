@@ -20,6 +20,7 @@
   import AppIcon from "../components/AppIcon.svelte";
 
   let idleMinutes = $derived($boot?.settings.idleMinutes ?? 3);
+  let autoPauseIdle = $derived($boot?.settings.autoPauseIdle ?? true);
   let theme = $derived(($boot?.settings.theme ?? "dark") as ThemeSetting);
   let portable = $derived($boot?.settings.portable ?? false);
   let dataPath = $derived($boot?.settings.dataPath ?? "");
@@ -53,6 +54,7 @@
   }
 
   function stepIdle(delta: number) {
+    if (!autoPauseIdle) return;
     const next = Math.max(1, Math.min(120, idleMinutes + delta));
     if (next === idleMinutes) return;
     void saveSettings({ idleMinutes: next });
@@ -170,15 +172,42 @@
 
     <div class="setting-row">
       <div class="setting-text">
-        <div class="setting-name">Idle timeout</div>
-        <div class="setting-help">Time without input before the clock pauses.</div>
+        <div class="setting-name">Pause when I step away</div>
+        <div class="setting-help">
+          After {idleMinutes} min with no cursor or keyboard activity, the clock pauses. It
+          resumes when you move again.
+        </div>
       </div>
-      <div class="stepper" role="group" aria-label="Idle timeout in minutes">
-        <button onclick={() => stepIdle(-1)} aria-label="Decrease idle timeout" disabled={idleMinutes <= 1}>
+      <button
+        class="toggle"
+        class:on={autoPauseIdle}
+        onclick={() => void saveSettings({ autoPauseIdle: !autoPauseIdle })}
+        aria-pressed={autoPauseIdle}
+        aria-label="Pause when I step away"
+      >
+        <span class="knob"></span>
+      </button>
+    </div>
+
+    <div class="setting-row" class:disabled={!autoPauseIdle}>
+      <div class="setting-text">
+        <div class="setting-name">Away timeout</div>
+        <div class="setting-help">Minutes of inactivity before the clock pauses.</div>
+      </div>
+      <div class="stepper" role="group" aria-label="Away timeout in minutes">
+        <button
+          onclick={() => stepIdle(-1)}
+          aria-label="Decrease away timeout"
+          disabled={!autoPauseIdle || idleMinutes <= 1}
+        >
           <Icon name="minus" size={13} />
         </button>
         <span class="value">{idleMinutes} min</span>
-        <button onclick={() => stepIdle(1)} aria-label="Increase idle timeout" disabled={idleMinutes >= 120}>
+        <button
+          onclick={() => stepIdle(1)}
+          aria-label="Increase away timeout"
+          disabled={!autoPauseIdle || idleMinutes >= 120}
+        >
           <Icon name="plus" size={13} />
         </button>
       </div>
